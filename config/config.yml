@@ -60,6 +60,7 @@ filter_dir: results/filtered
 align_dir: results/aligned
 qc_dir: results/qc
 coverage_dir: results/coverage
+pileup_dir: results/pileup
 
 # ++ Config Directoties ++ #
 tools: config/tools
