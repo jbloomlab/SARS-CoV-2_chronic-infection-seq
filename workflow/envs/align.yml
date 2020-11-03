@@ -1,0 +1,6 @@
+channels:
+  - bioconda
+dependencies:
+  - bwa=0.7
+  - star=2.7
+  - samtools=1.10
