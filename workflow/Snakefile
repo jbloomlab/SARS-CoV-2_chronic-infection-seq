@@ -1,0 +1,56 @@
+""" 
+This Snakemake file runs the template analysis for the viral-deepseq pipeline.
+
+Author: Will Hannon – https://www.linkedin.com/in/williamhannon/
+"""
+
+#### ----------------------- Imports ----------------------- ####
+
+import pandas as pd 
+from os.path import join
+from snakemake.utils import min_version
+
+min_version('5.6.0')  # require `snakemake` >= 5.6.0
+
+#### -------------------- Configuration -------------------- ####
+
+configfile: "config/config.yml"
+
+#### ------------------------ Utils ------------------------ ####
+
+include: "rules/common.smk"
+
+#### ----------------------- Targets ----------------------- ####
+
+rule all:
+    input: 
+        expand(join(config['pileup_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.mpileup-test.csv"),accession=pd.read_csv(config['samples']['file'])['Run'], aligner=['BWA']),
+        join(config['pileup_dir'], "raw-variants.csv"),
+        join(config['qc_dir'], 'multiqc'),
+        join(config['coverage_dir'], "merged.bedgraph"),
+        join(config['coverage_dir'], "merged.depth"),
+        join(config['coverage_dir'], "merged.average.depth"),
+        join(config['coverage_dir'], "coverage.stats")
+        
+rule clean:
+    shell:
+        """
+        rm -rf logs/
+        rm -rf tmp/
+        rm -f slurm*.out
+        """
+#### ------------------------ Rules ------------------------ ####
+
+include: "rules/download-reference.smk"
+include: "rules/download-tools.smk"
+include: "rules/download-fastq.smk"
+include: "rules/index-reference.smk"
+include: "rules/trim-adapters.smk"
+include: "rules/filter-reads.smk"
+include: "rules/align-reads.smk"
+include: "rules/calculate-coverage.smk"
+include: "rules/calculate-pileup.smk"
+include: "rules/qc-tools.smk"
+
+
+#include: "rules/variant.smk"
