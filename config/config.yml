@@ -51,6 +51,12 @@ BQ: 25
 # Bin size for coverage graphs
 bin_size: 50
 
+# Parameters for Varscan2
+min_coverage: 200
+min_reads_supporting: 200
+min_allele_frequency: 0.005
+strand_bias_filter: 1
+
 #### ------------------------- Dirs ------------------------ ####
 
 # ++ Results Directoties ++ #
@@ -61,6 +67,7 @@ align_dir: results/aligned
 qc_dir: results/qc
 coverage_dir: results/coverage
 pileup_dir: results/pileup
+variant_dir: results/variant
 
 # ++ Config Directoties ++ #
 tools: config/tools
