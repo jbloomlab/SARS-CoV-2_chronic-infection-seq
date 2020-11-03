@@ -1,0 +1,10 @@
+﻿Run,Path,LibraryLayout,Virus,Host,Source,Day
+Day18_Fullgenome_5_N_4_28_20frg_321634w_NA11,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day18_Fullgenome_5_N_4_28_20frg_321634w_NA11.fastq],SINGLE,SARS2,human,local,18
+Day25_Fullgenome_6_N_5_5_20frg_321634w_NA12,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day25_Fullgenome_6_N_5_5_20frg_321634w_NA12.fastq],SINGLE,SARS2,human,local,25
+Day75_Fullgenome_8_N_6_24_20frg_321634w_NB2,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day75_Fullgenome_8_N_6_24_20frg_321634w_NB2.fastq],SINGLE,SARS2,human,local,75
+Day81_Fullgenome_7_N_6_30_20frg_321634w_NB1.fastq,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day81_Fullgenome_7_N_6_30_20frg_321634w_NB1.fastq],SINGLE,SARS2,human,local,81
+Day128_Fullgenome_A5_20frg_819_NP_08_16_321948w_BC6,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day128_Fullgenome_A5_20frg_819_NP_08_16_321948w_BC6.fastq],SINGLE,SARS2,human,local,128
+Day130_Fullgenome_A6_20frg_819_NP_08_18_321948w_BC7,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day130_Fullgenome_A6_20frg_819_NP_08_18_321948w_BC7.fastq],SINGLE,SARS2,human,local,130
+Day143_Fullgenome_A2_20frg_819_8_31_322026w_AG11,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day143_Fullgenome_A2_20frg_819_8_31_322026w_AG11.fastq],SINGLE,SARS2,human,local,143
+Day146_Fullgenome_A10_20frg_819_NP_9_3_20_322067w_CA10,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day146_Fullgenome_A10_20frg_819_NP_9_3_20_322067w_CA10.fastq],SINGLE,SARS2,human,local,146
+Day152_Fullgenome_7_20frg_819_N3_9_9_322214w_AE4,[/fh/fast/bloom_j/SR/ngs/illumina_Manish/Day152_Fullgenome_7_20frg_819_N3_9_9_322214w_AE4.fastq],SINGLE,SARS2,human,local,152
