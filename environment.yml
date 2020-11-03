@@ -1,0 +1,11 @@
+name: viral-deepseq
+
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - snakemake-minimal=5.17
+  - python=3.8
+  - pandas=1.0
