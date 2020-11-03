@@ -1,0 +1,71 @@
+#### ============ viral-deepseq configuration file ============ ####
+#                                                                  #
+# This file contains the tunable parameters for the viral-deepseq  #
+# pipeline.                                                        #
+#                                                                  #
+#### -------------------------- Util -------------------------- ####
+
+varscan: https://github.com/dkoboldt/varscan/raw/master/VarScan.v2.4.0.jar
+snpeff: http://sourceforge.net/projects/snpeff/files/snpEff_latest_core.zip
+
+#### ------------------------- Samples ------------------------ ####
+
+samples: 
+  file: config/samples.csv
+  public: TRUE
+
+#### ------------------------ Genomes ----------------------- ####
+# Put viral and host genome ftp download locations here.         #
+# organism:                                                      #
+#   reference sequence: ftp://                                   #
+#   gtf annotations: ftp://                                      #
+#   contig: `only if the sequence is viral give it's contig`     #
+#### -------------------------------------------------------- ####
+
+SARS2:
+  ref: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/009/858/895/GCF_009858895.2_ASM985889v3/GCF_009858895.2_ASM985889v3_genomic.fna.gz
+  gtf: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/009/858/895/GCF_009858895.2_ASM985889v3/GCF_009858895.2_ASM985889v3_genomic.gtf.gz
+  contig: NC_045512.2
+
+human:
+  ref: ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+  gtf: ftp://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz
+
+#### ------------------------ Params ----------------------- ####
+
+# Desired thread count for each rule
+threads:
+  max_cpu: 32
+  fastq_download: 8
+  pileup: 16
+
+# Filter fastq with kmer or align to multiple genomes
+filter_reads: TRUE
+
+# Remove duplicates with Picard
+remove_duplicates: false
+
+# Average base quality score to exclude below
+BQ: 25
+
+# Bin size for coverage graphs
+bin_size: 50
+
+#### ------------------------- Dirs ------------------------ ####
+
+# ++ Results Directoties ++ #
+fastq_dir: results/fastq
+trim_dir: results/trimmed
+filter_dir: results/filtered
+align_dir: results/aligned
+qc_dir: results/qc
+coverage_dir: results/coverage
+
+# ++ Config Directoties ++ #
+tools: config/tools
+ref_dir: config/ref
+gtf_dir: config/gtf
+index_dir: 
+  bwa: config/index/bwa
+  star: config/index/star
+  samtools: config/index/samtools
