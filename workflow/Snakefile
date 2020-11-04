@@ -25,6 +25,7 @@ include: "rules/common.smk"
 rule all:
     input: 
         expand(join(config['pileup_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.mpileup-test.csv"),accession=pd.read_csv(config['samples']['file'])['Run'], aligner=['BWA']),
+        join(config['variant_dir'], "variants.csv"),
         join(config['pileup_dir'], "raw-variants.csv"),
         join(config['qc_dir'], 'multiqc'),
         join(config['coverage_dir'], "merged.bedgraph"),
@@ -51,6 +52,4 @@ include: "rules/align-reads.smk"
 include: "rules/calculate-coverage.smk"
 include: "rules/calculate-pileup.smk"
 include: "rules/qc-tools.smk"
-
-
-#include: "rules/variant.smk"
+include: "rules/call-variants.smk"
