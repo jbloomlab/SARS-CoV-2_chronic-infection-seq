@@ -1,0 +1,525 @@
+---
+title: "SARS-CoV-2 Chronic Infection"
+author: "Will Hannon"
+date: "11/7/2020"
+output: powerpoint_presentation
+---
+
+```{r Setup, include=FALSE}
+require("knitr")
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r Required Packages, message=FALSE, warning=FALSE, echo=FALSE}
+
+## ==== Install Required Packages ==== ##
+
+## List of all packages needed -- non-BioManager installed
+packages = c("tidyverse", "ggrepel", "plotly", "seqinr")
+## Check that packages are installed, if not, install them
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+## Packages loading
+invisible(lapply(c(packages), library, character.only = TRUE))
+
+```
+
+
+```{r Filepaths, include=FALSE}
+## ==== Important file paths ==== ##
+
+pileup.data = "../results/pileup/raw-variants.csv" 
+depth.data = "../results/coverage/merged.depth"
+variant.data = "../results/variant/variants.csv"
+sample.data = "../config/samples.csv"
+
+# Primer Sequences
+insert.bed = "../config/nCoV-2019.insert.bed.txt"
+primers.bed = "../config/nCoV-2019.primer.bed.txt"
+
+```
+
+
+```{r Coding Change Function, message=F, warning=F, echo=F}
+
+## === Function to annotate the coding change based on pos === ##
+# only works in spike for SARS-CoV-2 #
+annotate.coding.change = function(POS, ALT, ref.genome) {
+  
+  # Get the sequence of Spike
+  spike.seq = ref.genome$NC_045512.2[21563:25384]
+  
+  # Translate the positon to coordinates in Spike 
+  POS.spike = POS - 21562
+  
+  # Get the codon by the Spike index
+  if (POS.spike %% 3 == 1) {
+    
+    # Start of the codon 
+    codon.pos = 1
+    # Get the codon
+    codon.seq = spike.seq[(POS.spike):(POS.spike+2)]
+    # Translate
+    codon.aa = translate(codon.seq, frame = 0, sens = "F")
+    # Change the seq to alt
+    codon.seq[codon.pos] = tolower(ALT)
+    # Translate the alternative codon
+    codon.aa.alt = translate(codon.seq, frame = 0, sens = "F")
+    # Return the change
+    return(paste0(codon.aa, ((POS.spike+2)/3), codon.aa.alt))
+    
+  } else if (POS.spike %% 3 == 2) {
+    
+    # Middle of the codon 
+    codon.pos = 2
+    # Get the codon
+    codon.seq = spike.seq[(POS.spike-1):(POS.spike+1)]
+    # Translate
+    codon.aa = translate(codon.seq, frame = 0, sens = "F")
+    # Change the seq to alt
+    codon.seq[codon.pos] = tolower(ALT)
+    # Translate the alternative codon
+    codon.aa.alt = translate(codon.seq, frame = 0, sens = "F")
+    # Return the change
+    return(paste0(codon.aa, ((POS.spike+1)/3), codon.aa.alt))
+    
+  } else if (POS.spike %% 3 == 0) {
+    
+    # End of the codon 
+    codon.pos = 3
+    # Get the codon
+    codon.seq = spike.seq[(POS.spike-2):(POS.spike)]
+    # Translate
+    codon.aa = translate(codon.seq, frame = 0, sens = "F")
+    # Change the seq to alt
+    codon.seq[codon.pos] = tolower(ALT)
+    # Translate the alternative codon
+    codon.aa.alt = translate(codon.seq, frame = 0, sens = "F")
+    # Return the change
+    return(paste0(codon.aa, ((POS.spike)/3), codon.aa.alt))
+  
+  }
+
+}
+
+```
+
+## Coverage Over Spike
+
+```{r Coverage, message=F, warning=F, echo=F, fig.width=10, fig.height=6}
+
+# == Define the regions of interst - Spike, RBD, and RBM == #
+spike.coords = c(21563, 25384)
+rbd.coords = c(22517, 23185)
+rbm.coords = c(22871, 23086)
+
+# == Import the coverage data == #
+# Calculate the number of base observavtions in 10bp bins
+samtools.depth.bins = left_join(read.table(depth.data, header = T), read_csv(sample.data), by = c("Accession" = "Run"))
+
+# Plot the depth over Spike - no cuttoff
+samtools.depth.bins %>% 
+  ggplot(aes(x = (Start+Stop)/2, y = Depth, col = as.factor(Day))) + 
+    geom_line(size = 1.5) +
+    scale_color_viridis_d() + 
+    scale_x_continuous(limits = c(spike.coords[1], spike.coords[2])) + 
+    xlab("Position") + 
+    ylab("Depth") + 
+    annotate("rect", xmin = spike.coords[1], xmax = spike.coords[2], ymin = -100, ymax = -1000, fill = "darkgoldenrod1", col = "black", alpha = 0.75) + 
+    annotate("text", x = (spike.coords[1] + spike.coords[2])/2, y = (-100 + -1000)/2, label = "Spike") + 
+    annotate("rect", xmin = rbd.coords[1], xmax = rbd.coords[2], ymin = -1100, ymax = -2000, fill = "coral2", col = "black", alpha = 0.75) + 
+    annotate("text", x = (rbd.coords[1] + rbd.coords[2])/2, y = (-1100 + -2000)/2, label = "RBD") + 
+    annotate("rect", xmin = rbm.coords[1], xmax = rbm.coords[2], ymin = -2100, ymax = -3000, fill = "cadetblue2", col = "black", alpha = 0.75) +
+    annotate("text", x = (rbm.coords[1] + rbm.coords[2])/2, y = (-2100 + -3000)/2, label = "RBM") +
+    theme_classic() +
+    theme(legend.position="none") +
+    theme(legend.box.background = element_rect(colour = "black")) +
+    theme(text=element_text(size=18,  family="Helvetica")) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(panel.grid.major.y = element_line(colour="grey", linetype="dashed")) 
+
+```
+
+### Coverage Over Spike Capped at 500X
+
+```{r Coverage Max, message=F, warning=F, echo=F, fig.width=10, fig.height=6}
+
+# Plot the depth over Spike - no cuttoff
+samtools.depth.bins %>% 
+  mutate(Depth = ifelse(Depth <= 500, Depth, 500)) %>%
+  ggplot(aes(x = (Start+Stop)/2, y = Depth, col = as.factor(Day))) + 
+    geom_line(size = 1.5) +
+    geom_hline(yintercept = 100, size = 1.5, linetype = 2, col = "red") +
+    scale_color_viridis_d() + 
+    scale_x_continuous(limits = c(spike.coords[1], spike.coords[2])) + 
+    xlab("Position") + 
+    ylab("Depth") + 
+    annotate("rect", xmin = spike.coords[1], xmax = spike.coords[2], ymin = -10, ymax = -50, fill = "darkgoldenrod1", col = "black", alpha = 0.75) + 
+    annotate("text", x = (spike.coords[1] + spike.coords[2])/2, y = (-5 + -50)/2, label = "Spike") + 
+    annotate("rect", xmin = rbd.coords[1], xmax = rbd.coords[2], ymin = -55, ymax = -100, fill = "coral2", col = "black", alpha = 0.75) + 
+    annotate("text", x = (rbd.coords[1] + rbd.coords[2])/2, y = (-55 + -100)/2, label = "RBD") + 
+    annotate("rect", xmin = rbm.coords[1], xmax = rbm.coords[2], ymin = -105, ymax = -150, fill = "cadetblue2", col = "black", alpha = 0.75) +
+    annotate("text", x = (rbm.coords[1] + rbm.coords[2])/2, y = (-105 + -150)/2, label = "RBM") +
+    theme_classic() +
+    theme(legend.position="none") +
+    theme(legend.box.background = element_rect(colour = "black")) +
+    theme(text=element_text(size=18,  family="Helvetica")) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(panel.grid.major.y = element_line(colour="grey", linetype="dashed")) 
+
+
+
+```
+
+
+```{r Process Variants, message=F, warning=F, echo=F}
+
+## == Process the variant dataframe from lofreq and varscan == ##
+
+# Define the reference genome
+ref.genome = read.fasta("../config/ref/SARS2.fa")
+
+# Import data
+variant.df = read_csv(variant.data) %>% 
+  # Get only the variants in the Spike gene
+  filter(POS >= spike.coords[1] & POS <= spike.coords[2], Caller == "lofreq") 
+
+# Determine what the AA changes are 
+aa_changes = c()
+
+for (i in (1:nrow(variant.df))) {
+  
+  # Get the position and the alt allele
+  position = variant.df[i,]$POS
+  alternative = variant.df[i,]$ALT
+  
+  # Determine the amino acid change
+  aa_change = annotate.coding.change(POS=position, ALT = alternative, ref.genome)
+  
+  # Append the aa changes to vector
+  aa_changes = append(aa_changes, aa_change)
+  
+}
+ 
+# Append the AA change to the df
+variant.df$AA_change = aa_changes
+
+# Get protein position, AA ref, and AA alt
+variant.df = variant.df %>% 
+  mutate(AA_POS = as.numeric(str_extract(AA_change, "[[:digit:]]+"))) %>% 
+  separate(AA_change, 
+           into = c("AA_REF", "AA_ALT"), 
+           sep = "[[:digit:]]+", remove = FALSE) %>% 
+  mutate(SNP = paste0(REF, POS, ALT))
+
+```
+
+### Variants over Spike (>0.01)
+
+```{r Variants, message=F, warning=F, echo=F, fig.width=10, fig.height=6}
+
+
+read_csv(variant.data) %>% 
+  # Filter for minimum AF and Spike coordinates
+  filter(AF >= 0.01, POS >= spike.coords[1] & POS <= spike.coords[2], Caller == "lofreq") %>% 
+  # Plot the mutations in Spike
+  ggplot(aes(x = POS, y = AF, col = as.factor(Day), fill = as.factor(Day))) +
+    geom_point()  +
+    geom_bar(stat="identity", width=.01, position = position_identity()) +    
+    scale_color_viridis_d() + 
+    scale_fill_viridis_d() + 
+    scale_x_continuous(limits = c(spike.coords[1], spike.coords[2])) + 
+    xlab("Position") + 
+    ylab("Depth") + 
+    labs(color='Day', fill='Day') +
+    annotate("rect", xmin = spike.coords[1], xmax = spike.coords[2], ymin = -.001, ymax = -.05, fill = "darkgoldenrod1", col = "black", alpha = 0.75) + 
+    annotate("text", x = (spike.coords[1] + spike.coords[2])/2, y = (-.001 + -.05)/2, label = "Spike") + 
+    annotate("rect", xmin = rbd.coords[1], xmax = rbd.coords[2], ymin = -.06, ymax = -.11, fill = "coral2", col = "black", alpha = 0.75) + 
+    annotate("text", x = (rbd.coords[1] + rbd.coords[2])/2, y = (-.06 + -.11)/2, label = "RBD") + 
+    annotate("rect", xmin = rbm.coords[1], xmax = rbm.coords[2], ymin = -.12, ymax = -.17, fill = "cadetblue2", col = "black", alpha = 0.75) +
+    annotate("text", x = (rbm.coords[1] + rbm.coords[2])/2, y = (-.12 + -.17)/2, label = "RBM") +
+    theme_classic() +
+    theme(legend.position="right") +
+    theme(legend.box.background = element_rect(colour = "black")) +
+    theme(text=element_text(size=18,  family="Helvetica")) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(panel.grid.major.y = element_line(colour="grey", linetype="dashed")) 
+  
+
+
+```
+
+### Variants over Spike (>0.01), Cluster
+
+```{r Variants Highlighted, message=F, warning=F, echo=F, fig.width=10, fig.height=6}
+read_csv(variant.data) %>% 
+  # Filter for minimum AF and Spike coordinates
+  filter(AF >= 0.01, POS >= spike.coords[1] & POS <= spike.coords[2], Caller == "lofreq") %>% 
+  # Plot the mutations in Spike
+  ggplot(aes(x = POS, y = AF, col = as.factor(Day), fill = as.factor(Day))) +
+    geom_point()  +
+    geom_bar(stat="identity", width=.01, position = position_identity()) +    
+    scale_color_viridis_d() + 
+    scale_fill_viridis_d() + 
+    scale_x_continuous(limits = c(spike.coords[1], spike.coords[2])) + 
+    xlab("Position") + 
+    ylab("Depth") + 
+    labs(color='Day', fill='Day') +
+    annotate("rect", xmin = 22990, xmax = 23300, ymin = 0, ymax = 1, fill = "red", alpha = 0.2) +
+    annotate("rect", xmin = spike.coords[1], xmax = spike.coords[2], ymin = -.001, ymax = -.05, fill = "darkgoldenrod1", col = "black", alpha = 0.75) + 
+    annotate("text", x = (spike.coords[1] + spike.coords[2])/2, y = (-.001 + -.05)/2, label = "Spike") + 
+    annotate("rect", xmin = rbd.coords[1], xmax = rbd.coords[2], ymin = -.06, ymax = -.11, fill = "coral2", col = "black", alpha = 0.75) + 
+    annotate("text", x = (rbd.coords[1] + rbd.coords[2])/2, y = (-.06 + -.11)/2, label = "RBD") + 
+    annotate("rect", xmin = rbm.coords[1], xmax = rbm.coords[2], ymin = -.12, ymax = -.17, fill = "cadetblue2", col = "black", alpha = 0.75) +
+    annotate("text", x = (rbm.coords[1] + rbm.coords[2])/2, y = (-.12 + -.17)/2, label = "RBM") +
+    theme_classic() +
+    theme(legend.position="right") +
+    theme(legend.box.background = element_rect(colour = "black")) +
+    theme(text=element_text(size=18,  family="Helvetica")) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(panel.grid.major.y = element_line(colour="grey", linetype="dashed")) 
+
+```
+
+### Variants over RBD (>0.01)
+```{r Variants RBD, message=F, warning=F, echo=F, fig.width=10, fig.height=6}
+
+read_csv(variant.data) %>% 
+  # Filter for minimum AF and Spike coordinates
+  filter(AF >= 0.01, POS >= rbd.coords[1] & POS <= rbd.coords[2], Caller == "lofreq") %>% 
+  # Plot the mutations in Spike
+  ggplot(aes(x = POS, y = AF, col = as.factor(Day), fill = as.factor(Day))) +
+    geom_point()  +
+    geom_bar(stat="identity", width=.01, position = position_identity()) +    
+    scale_color_viridis_d() + 
+    scale_fill_viridis_d() + 
+    scale_x_continuous(limits = c(rbd.coords[1], rbd.coords[2])) + 
+    xlab("Position") + 
+    ylab("Depth") + 
+    labs(color='Day', fill='Day') +
+    annotate("rect", xmin = 22990, xmax = rbd.coords[2], ymin = 0, ymax = 1, fill = "red", alpha = 0.2) +
+    annotate("rect", xmin = rbd.coords[1], xmax = rbd.coords[2], ymin = -.06, ymax = -.11, fill = "coral2", col = "black", alpha = 0.75) + 
+    annotate("text", x = (rbd.coords[1] + rbd.coords[2])/2, y = (-.06 + -.11)/2, label = "RBD") + 
+    annotate("rect", xmin = rbm.coords[1], xmax = rbm.coords[2], ymin = -.12, ymax = -.17, fill = "cadetblue2", col = "black", alpha = 0.75) +
+    annotate("text", x = (rbm.coords[1] +rbm.coords[2])/2, y = (-.12 + -.17)/2, label = "RBM") +
+    theme_classic() +
+    theme(legend.position="right") +
+    theme(legend.box.background = element_rect(colour = "black")) +
+    theme(text=element_text(size=18,  family="Helvetica")) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(panel.grid.major.y = element_line(colour="grey", linetype="dashed")) 
+
+
+```
+
+### Variant Frequency over Time -- lofreq
+
+```{r Variant Timecourse, message=F, warning=F, echo=F, fig.width=15, fig.height=10}
+
+# Determine the SNPs to analyze: minimum depth 100X, minimum AF > 5%, in at least 2 samples, had more than 1 alt allele.
+SNPs.to.analyze.variants = filter(variant.df, AF >= 0.05, DP >= 100) %>% group_by(SNP) %>% summarize(Count = n()) %>% filter(Count > 1) %>% pull(SNP)
+
+## == Plot parameters == ##
+y.pos = -.05
+point.size = 2
+
+variant.df[which(variant.df$SNP %in% SNPs.to.analyze.variants),] %>% 
+  select(POS, REF, ALT, AA_change, AF, Day) %>% 
+  # Set the AF to 0 on days the variant wasn't observed
+  pivot_wider(names_from = Day, values_from = AF, values_fill = 0) %>% 
+  # Pivot long for plotting
+  pivot_longer(!c("POS", "REF", "ALT", "AA_change"), names_to = "Day", values_to = "AF") %>% 
+  ggplot(aes(x = as.numeric(Day), y = AF)) +
+    annotate(geom = "rect", xmin = min(variant.df$Day), xmax = max(variant.df$Day), ymin=0, ymax=1, fill = "darkgrey") +
+    geom_area(fill = "chocolate1") +
+    #geom_point(col ="black") +
+    facet_wrap(~AA_change, ncol =3 ) +
+    ylab("AF") + 
+    xlab("Day") + 
+    #scale_x_continuous(breaks=unique(variant.df$Day)) +
+    annotate(geom = "segment", x = 18, y = y.pos ,  xend = 152, yend = y.pos, size = 1) +
+    annotate(geom = "point", x = 18, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 25, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 75, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 81, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 128, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 130, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 143, y = y.pos, size = point.size, col = 'red') +
+    annotate(geom = "point", x = 146, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 152, y = y.pos, size = point.size) +
+    theme_classic() +
+    theme(text=element_text(size=18,  family="Helvetica")) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+```
+
+```{r Process Pileup, message=F, warning=F, echo=F}
+
+## == Process the pileup dataframe from lofreq and varscan == ##
+
+# Import data
+pileup.df = read_csv(pileup.data) %>% 
+  # Get SNPs only
+  filter(Strand == "+/-", AF > 0) %>% 
+  # Get only positions in the Spike
+  filter(POS >= spike.coords[1] & POS <= spike.coords[2])
+
+# Determine what the AA changes are 
+aa_changes = c()
+
+for (i in (1:nrow(pileup.df))) {
+  
+  # Get the position and the alt allele
+  position = pileup.df[i,]$POS
+  alternative = pileup.df[i,]$ALT
+  
+  # Determine the amino acid change
+  aa_change = annotate.coding.change(POS=position, ALT = alternative, ref.genome)
+  
+  # Append the aa changes to vector
+  aa_changes = append(aa_changes, aa_change)
+  
+}
+ 
+# Append the AA change to the df
+pileup.df$AA_change = aa_changes
+
+# Get protein position, AA ref, and AA alt
+pileup.df = pileup.df %>% 
+  mutate(AA_POS = as.numeric(str_extract(AA_change, "[[:digit:]]+"))) %>% 
+  separate(AA_change, 
+           into = c("AA_REF", "AA_ALT"), 
+           sep = "[[:digit:]]+", remove = FALSE) %>% 
+  mutate(SNP = paste0(REF, POS, ALT)) %>% 
+  # Add the day from the other dataframe
+  left_join(., distinct(select(variant.df, Accession, Day)), by =  "Accession")
+
+```
+
+### Variant Frequency over Time -- mpileup
+
+```{r Pileup Timecourse, message=F, warning=F, echo=F, fig.width=15, fig.height=10}
+
+# Determine the SNPs to analyze: minimum depth 100X, minimum AF > 5%, in at least 2 samples, had more than 1 alt allele.
+SNPs.to.analyze.pileup = filter(pileup.df, AF >= 0.05, Depth >= 100) %>% group_by(SNP) %>% summarize(Count = n()) %>% filter(Count > 1) %>% pull(SNP)
+  
+## == Plot parameters == ##
+y.pos = -.05
+point.size = 2
+
+## == Plot the data == ##
+pileup.df[which(pileup.df$SNP %in% SNPs.to.analyze.pileup),] %>% 
+  select(POS, REF, ALT, AA_change, AF, Day) %>% 
+  # Set the AF to 0 on days the variant wasn't observed
+  pivot_wider(names_from = Day, values_from = AF, values_fill = 0) %>% 
+  # Pivot long for plotting
+  pivot_longer(!c("POS", "REF", "ALT", "AA_change"), names_to = "Day", values_to = "AF") %>% 
+  ggplot(aes(x = as.numeric(Day), y = AF)) +
+    annotate(geom = "rect", xmin = min(pileup.df$Day), xmax = max(pileup.df$Day), ymin=0, ymax=1, fill = "darkgrey") +
+    geom_area(fill = "chocolate1") +
+    #geom_point(col ="black") +
+    facet_wrap(~AA_change, ncol = 3) +
+    ylab("AF") + 
+    xlab("Day") + 
+    #scale_x_continuous(breaks=unique(pileup.df$Day)) +
+    annotate(geom = "segment", x = 18, y = y.pos ,  xend = 152, yend = y.pos, size = 1) +
+    annotate(geom = "point", x = 18, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 25, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 75, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 81, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 128, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 130, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 143, y = y.pos, size = point.size, col = 'red') +
+    annotate(geom = "point", x = 146, y = y.pos, size = point.size) +
+    annotate(geom = "point", x = 152, y = y.pos, size = point.size) +
+    theme_classic() +
+    theme(text=element_text(size=18,  family="Helvetica")) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+```
+
+
+### Primers
+
+```{r Inserts, message=F, warning=F, echo=F, fig.width=10, fig.height=6}
+
+# insert.df = read.table(insert.bed) %>% 
+#   filter(V2 >= spike.coords[1], V3 <= spike.coords[2])
+# 
+# primer.df = read.table(primers.bed) %>% 
+#   filter(V2 >= 22542, V3 <= 23500)
+
+read_csv(variant.data) %>% 
+  # Filter for minimum AF and Spike coordinates
+  filter(AF >= 0.01, POS >= rbd.coords[1] & POS <= rbd.coords[2], Caller == "lofreq") %>% 
+  # Plot the mutations in Spike
+  ggplot(aes(x = POS, y = AF, col = as.factor(Day), fill = as.factor(Day))) +
+    geom_point()  +
+    geom_bar(stat="identity", width=.01, position = position_identity()) +    
+    geom_segment(
+      x = 23144, y = -.01,
+      xend = 23500, yend = -.01,
+      lineend = "round", # See available arrow types in example above
+      linejoin = "round",
+      size = 2, 
+      # arrow = arrow(length = unit(0.3, "inches")),
+      colour = "#858383" # Also accepts "red", "blue' etc
+    ) +
+    geom_segment(
+      x = 22819, y = -.03,
+      xend = 23192, yend = -.03,
+      lineend = "round", # See available arrow types in example above
+      linejoin = "round",
+      size = 2, 
+      # arrow = arrow(length = unit(0.3, "inches")),
+      colour = "#636363" # Also accepts "red", "blue' etc
+    ) +
+    geom_segment(
+      x = 22542, y = -.05,
+      xend = 22877, yend = -.05,
+      lineend = "round", # See available arrow types in example above
+      linejoin = "round",
+      size = 2, 
+      # arrow = arrow(length = unit(0.3, "inches")),
+      colour = "#383838" # Also accepts "red", "blue' etc
+    ) +
+    scale_color_viridis_d() + 
+    scale_fill_viridis_d() + 
+    scale_x_continuous(limits = c(rbd.coords[1], rbd.coords[2])) + 
+    xlab("Position") + 
+    ylab("Depth") + 
+    labs(color='Day', fill='Day') +
+    annotate("rect", xmin = spike.coords[1], xmax = spike.coords[2], ymin = -.001, ymax = -.05, fill = "darkgoldenrod1", col = "black", alpha = 0.75) + 
+    annotate("text", x = (spike.coords[1] + spike.coords[2])/2, y = (-.001 + -.05)/2, label = "Spike") + 
+    annotate("rect", xmin = rbd.coords[1], xmax = rbd.coords[2], ymin = -.06, ymax = -.11, fill = "coral2", col = "black", alpha = 0.75) + 
+    annotate("text", x = (rbd.coords[1] + rbd.coords[2])/2, y = (-.06 + -.11)/2, label = "RBD") + 
+    annotate("rect", xmin = rbm.coords[1], xmax = rbm.coords[2], ymin = -.12, ymax = -.17, fill = "cadetblue2", col = "black", alpha = 0.75) +
+    annotate("text", x = (rbm.coords[1] + rbm.coords[2])/2, y = (-.12 + -.17)/2, label = "RBM") +
+    theme_classic() +
+    theme(legend.position="right") +
+    theme(legend.box.background = element_rect(colour = "black")) +
+    theme(text=element_text(size=18,  family="Helvetica")) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(panel.grid.major.y = element_line(colour="grey", linetype="dashed")) 
+  
+# "nCoV-2019_76_LEFT"
+# "nCoV-2019_76_RIGHT"
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

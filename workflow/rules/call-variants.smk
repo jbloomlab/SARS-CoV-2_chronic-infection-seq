@@ -59,19 +59,22 @@ rule lofreq_calling:
            genome=get_genome
     output: join(config['variant_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.lofreq.vcf")
     params: 
-        maxdepth=1000000000000,
+        maxdepth=1000000,
         minimum_coverage=config['min_coverage']
     conda: '../envs/variant.yml'
     threads: config['threads']['max_cpu']
     shell:
         """
-        lofreq call-parallel --pp-threads {threads} \
-            --min-cov {params.minimum_coverage} \
-            --max-depth {params.maxdepth} \
-            -f {input.genome} \
-            --call-indels \
-            {input.bam} \
-            -o {output}
+        if [[ $(samtools view {input.bam} | head -n 5) ]]; then
+            lofreq call-parallel --pp-threads {threads} \
+                -d {params.maxdepth} \
+                -f {input.genome} \
+                --call-indels \
+                {input.bam} \
+                -o {output}
+        else
+            touch {output}
+        fi
         """ 
 
 

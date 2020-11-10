@@ -49,10 +49,10 @@ remove_duplicates: false
 BQ: 25
 
 # Bin size for coverage graphs
-bin_size: 50
+bin_size: 10
 
-# Parameters for Varscan2
-min_coverage: 200
+# Parameters for variant calling.
+min_coverage: 100
 min_reads_supporting: 200
 min_allele_frequency: 0.005
 strand_bias_filter: 1

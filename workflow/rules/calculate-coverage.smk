@@ -50,8 +50,8 @@ rule samtools_depth:
     conda: '../envs/samtools.yml'
     shell: 
         """
-        samtools depth -a -q {params.score} -g DUP {input.bam} \
-            | awk '{{sum+=$3}} NR%50==0 {{print $2-50 "\t" $2 "\t" sum/50 "\t"; sum=0}}' - \
+        samtools depth -a -m 0 -q {params.score} -g DUP {input.bam} \
+            | awk '{{sum+=$3}} NR%{params.binsize}==0 {{print $2-{params.binsize} "\t" $2 "\t" sum/{params.binsize} "\t"; sum=0}}' - \
             > {output}
 
         sed -i "s/$/\t{wildcards.accession}/" {output} 
@@ -75,12 +75,13 @@ rule average_depth:
     input: bam=join(config['align_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.virus.sorted.marked.bam"),
            bai=join(config['align_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.virus.sorted.marked.bam.bai")
     output: join(config['coverage_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.average.depth")
-    params: score=config['BQ']
+    params: score=config['BQ'], 
+            min_coverage=config['min_coverage']
     conda: '../envs/samtools.yml'
     shell:
         """
         samtools depth -a -q {params.score} -g DUP {input.bam} \
-            | awk '{{ if ($3 >= 200) sum+=1}} END {{print sum/NR*100}}' - \
+            | awk '{{ if ($3 >= {params.min_coverage}) sum+=1}} END {{print sum/NR*100}}' - \
             > {output}
 
         sed -i "s/$/\t{wildcards.accession}/" {output} 
