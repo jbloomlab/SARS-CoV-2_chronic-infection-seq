@@ -31,14 +31,14 @@ invisible(lapply(c(packages), library, character.only = TRUE))
 ```{r Filepaths, include=FALSE}
 ## ==== Important file paths ==== ##
 
-pileup.data = "../results/pileup/raw-variants.csv" 
-depth.data = "../results/coverage/merged.depth"
-variant.data = "../results/variant/variants.csv"
-sample.data = "../config/samples.csv"
+pileup.data = "../../results/pileup/raw-variants.csv" 
+depth.data = "../../results/coverage/merged.depth"
+variant.data = "../../results/variant/variants.csv"
+sample.data = "../../config/samples.csv"
 
 # Primer Sequences
-insert.bed = "../config/nCoV-2019.insert.bed.txt"
-primers.bed = "../config/nCoV-2019.primer.bed.txt"
+insert.bed = "../../config/nCoV-2019.insert.bed.txt"
+primers.bed = "../../config/nCoV-2019.primer.bed.txt"
 
 ```
 
@@ -320,7 +320,10 @@ read_csv(variant.data) %>%
 ```{r Variant Timecourse, message=F, warning=F, echo=F, fig.width=15, fig.height=10}
 
 # Determine the SNPs to analyze: minimum depth 100X, minimum AF > 5%, in at least 2 samples, had more than 1 alt allele.
-SNPs.to.analyze.variants = filter(variant.df, AF >= 0.05, DP >= 100) %>% group_by(SNP) %>% summarize(Count = n()) %>% filter(Count > 1) %>% pull(SNP)
+SNPs.to.analyze.variants = filter(variant.df, AF >= 0.01, DP >= 100) %>%
+  group_by(SNP) %>%
+  summarize(Count = n()) %>%
+  pull(SNP)
 
 ## == Plot parameters == ##
 y.pos = -.05
@@ -440,7 +443,6 @@ pileup.df[which(pileup.df$SNP %in% SNPs.to.analyze.pileup),] %>%
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
 
 ```
-
 
 ### Primers
 
