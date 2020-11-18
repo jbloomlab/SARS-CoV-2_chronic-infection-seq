@@ -1,4 +1,4 @@
 channels:
   - bioconda
 dependencies:
-  - trinity=2.8.5
+  - seqtk

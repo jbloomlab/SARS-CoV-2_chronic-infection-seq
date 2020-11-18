@@ -10,7 +10,7 @@ __default__:
   mailtype: END
 
 filter_reads_se:
-  cpus: 32
+  cpus: 15
   partition: campus-new
   time: 0-2
   mem: 100000
@@ -19,7 +19,7 @@ filter_reads_se:
   mailtype: END
 
 filter_reads_pe:
-  cpus: 32
+  cpus: 15
   partition: campus-new
   time: 0-2
   mem: 100000
@@ -28,21 +28,21 @@ filter_reads_pe:
   mailtype: END
 
 bwa_align:
-  cpus: 16
+  cpus: 15
   partition: campus-new
   time: 0-4
   user: wwh22@uw.edu
   mailtype: END
 
 bwa_index:
-  cpus: 16
+  cpus: 15
   partition: campus-new
   time: 0-4
   user: wwh22@uw.edu
   mailtype: END
 
 test_parsing:
-  cpus: 16
+  cpus: 15
   partition: campus-new
   time: 0-4
   user: wwh22@uw.edu

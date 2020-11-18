@@ -18,18 +18,38 @@ def single_ended(Run):
         return False
 
 
+def is_interleaved(Run):
+    """
+    Returns `True` if the Library Layout is paired-end reads in interleaved file.
+    """
+    # Get the Library Layout
+    interleaved = pd.read_csv(config['samples']['file']).set_index('Run').at[Run, 'Interleaved']
+    # Check the layout
+    if interleaved == "PAIRED":
+        return True
+    else:
+        return False
+
+
 def get_avaliable_fastqs(wildcards):
     """
     This function fills in the avaliable fastqs depending on 
     the library layout for the rule `trim_adapters_(pe | se)`. 
     """
+
     # If the layout is single-ended.
     if single_ended(wildcards.accession):
-        # Return the target files.
-        return expand(join(config["fastq_dir"], "{accession}", "{accession}.fastq.gz"), accession=wildcards.accession)
-    # Otherwise the layout is assumed to be paired-ended. 
+
+        if is_interleaved(wildcards.accession):
+            return expand([join(config["fastq_dir"], "deinterleaved", "{accession}", "{accession}_1.fastq.gz"),
+                          join(config["fastq_dir"], "deinterleaved", "{accession}", "{accession}_2.fastq.gz")], accession=wildcards.accession)
+        else:
+            # Return the target files.
+            return expand(join(config["fastq_dir"], "{accession}", "{accession}.fastq.gz"), accession=wildcards.accession)
+     
+     # Otherwise the layout is assumed to be paired-ended. 
     return expand([join(config["fastq_dir"], "{accession}", "{accession}_1.fastq.gz"),
-                   join(config["fastq_dir"], "{accession}", "{accession}_2.fastq.gz")], accession=wildcards.accession)
+                    join(config["fastq_dir"], "{accession}", "{accession}_2.fastq.gz")], accession=wildcards.accession)
 
 
 def get_avaliable_trimmed_fastqs(wildcards):
@@ -39,8 +59,14 @@ def get_avaliable_trimmed_fastqs(wildcards):
     """
     # If the layout is single-ended.
     if single_ended(wildcards.accession):
+
+        if is_interleaved(wildcards.accession):
+            return expand([join(config["trim_dir"], "{accession}", "{accession}_1.trimmed.fastq.gz"),
+                          join(config["trim_dir"], "{accession}", "{accession}_2.trimmed.fastq.gz")], accession=wildcards.accession)
+
         # Return the target files.
         return expand(join(config["trim_dir"], "{accession}", "{accession}.trimmed.fastq.gz"), accession=wildcards.accession)
+
     # Otherwise the layout is assumed to be paired-ended. 
     return expand([join(config["trim_dir"], "{accession}", "{accession}_1.trimmed.fastq.gz"),
                    join(config["trim_dir"], "{accession}", "{accession}_2.trimmed.fastq.gz")], accession=wildcards.accession)
@@ -53,8 +79,14 @@ def get_avaliable_filtered_fastqs(wildcards):
     """
     # If the layout is single-ended.
     if single_ended(wildcards.accession):
+
+        if is_interleaved(wildcards.accession):
+            return expand([join(config["filter_dir"], "{accession}", "{accession}_1.filtered.fastq.gz"),
+                           join(config["filter_dir"], "{accession}", "{accession}_2.filtered.fastq.gz")], accession=wildcards.accession)
+
         # Return the target files.
         return expand(join(config["filter_dir"], "{accession}", "{accession}.filtered.fastq.gz"), accession=wildcards.accession)
+
     # Otherwise the layout is assumed to be paired-ended. 
     return expand([join(config["filter_dir"], "{accession}", "{accession}_1.filtered.fastq.gz"),
                    join(config["filter_dir"], "{accession}", "{accession}_2.filtered.fastq.gz")], accession=wildcards.accession)

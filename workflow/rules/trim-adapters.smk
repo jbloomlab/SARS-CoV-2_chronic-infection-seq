@@ -52,6 +52,8 @@ rule trim_adapters_pe:
     shell:
         """ 
         fastp \
+            -i {input[0]} \
+            -I {input[1]} \
             -q 20 \
             -u 50 \
             -l 50 \
