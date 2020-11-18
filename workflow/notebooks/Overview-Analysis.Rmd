@@ -43,6 +43,8 @@ primers.bed = "../../config/nCoV-2019.primer.bed.txt"
 ## ==== Path to Reference genome to annotate the coding changes ==== ##
 ref.path = "../../config/ref/SARS2.fa"
 
+## ==== Path to pileup data from pysam to test and vallidate ==== ##
+pysam.data = "../../config/pysam_pileup.csv"
 
 ```
 
@@ -551,8 +553,9 @@ ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_
 ```
 
 
-```{r Main Figure, message=F, warning=F, echo=F, fig.width=7, fig.height=7}
+```{r Main Figure, message=F, warning=F, echo=F, fig.width=18, fig.height=4}
 
+require(grid)
 ## === Mian paper figure, Fig. 2 - Panel C. === ##
 
 # Determine the SNPs to include in the plot (only in the RBD, greater then 10% more than 100X, and in days 143|146|152)
@@ -562,30 +565,34 @@ SNPs.to.analyze.figure = filter(pileup.df, AF >= 0.10, Depth >= 100, POS >= rbd.
   pull(SNP)
 
 AAs.to.analyze.figure = c("E484A", "F486I", "N440D", "Q493K")
-  
+
+AApos.to.analyze.figure = c(484, 486, 440, 493, 489)
+
+
 ## == Plot parameters == ##
 y.pos = 0
 point.size = 2.5
 
 ## == Plot the data == ##
-pileup.df[which(pileup.df$AA_change %in% AAs.to.analyze.figure),] %>% 
-  select(POS, REF, ALT, AA_change, AF, Day) %>% 
+pileup.df[which(pileup.df$AA_POS %in% AApos.to.analyze.figure),] %>% 
+  filter(AF > 0.01) %>% 
+  select(POS, REF, ALT, AA_change, AF, Day, AA_POS, AA_REF, AA_ALT) %>% 
   # Set the AF to 0 on days the variant wasn't observed
   pivot_wider(names_from = Day, values_from = AF, values_fill = 0) %>% 
   # Pivot long for plotting
-  pivot_longer(!c("POS", "REF", "ALT", "AA_change"), names_to = "Day", values_to = "AF") %>% 
-  ggplot(aes(x = as.numeric(Day), y = AF)) +
+  pivot_longer(!c("POS", "REF", "ALT", "AA_change", "AA_POS", "AA_REF", "AA_ALT"), names_to = "Day", values_to = "AF") %>% 
+  ggplot(aes(x = as.numeric(Day), y = AF, fill = AA_ALT)) +
     annotate(geom = "rect", xmin = 143, xmax = 152, ymin=0, ymax=1, fill = "#BAB0AC") +
-    geom_area(fill = "#4E79A7") +
-    #geom_point(col ="black") +
-    facet_wrap(~AA_change, ncol = 2, nrow = 2) +
-    ylab("AF") + 
-    xlab("Day") + 
+    geom_area() +
+    geom_label_repel(aes(as.numeric(Day), AF, label = AA_ALT)) +    #geom_point(col ="black") +
+    facet_wrap(~AA_POS, nrow = 1) +
+    ylab("Mutation Fequency") + 
+    xlab("Days Post Hospital Admission") + 
     scale_x_continuous(breaks = c(143, 146, 152), limits = c(143, 152)) +
   
     ### ==== Segments/Point Annotations ==== ###
     annotate(geom = "segment", x = 143, y = y.pos ,  xend = 152, yend = y.pos, size = 1) +
-    annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1.5, col = "#E15759", linetype = 2) +
+    annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1.5, col = "#F28E2B", linetype = 2) +
     annotate(geom = "point", x = 143, y = y.pos, size = point.size) +
     annotate(geom = "segment", x = 143, y = y.pos-0.05 ,  xend = 143, yend = y.pos, size = 1) +
     annotate(geom = "point", x = 146, y = y.pos, size = point.size) +
@@ -594,16 +601,10 @@ pileup.df[which(pileup.df$AA_change %in% AAs.to.analyze.figure),] %>%
     annotate(geom = "segment", x = 152, y = y.pos-0.05 ,  xend = 152, yend = y.pos, size = 1) +
     ### ==== Segments/Point Annotations ==== ###
   
-    ### ==== Text Annotations ==== ###
-    annotate(geom = "text", x = 143.5, y = -0.04, label = "NP") +
-    annotate(geom = "text", x = 146.5, y = -0.04, label = "NP") +
-    annotate(geom = "text", x = 151.5, y = -0.04, label = "BAL", col = "#E15759") +
-    ### ==== Text Annotations ==== ###
-
     theme_classic() +
     theme(text=element_text(size=19,  family="Helvetica")) + 
-    theme(axis.text.x = element_text(angle = 35, vjust = 0.9, hjust=1)) +
-    theme(axis.title.x = element_text(vjust= -0.5))
+    theme(axis.title.x = element_text(vjust= -0.5))+ 
+    theme(panel.spacing = unit(2, "lines"))
 
 # Save the file to figures directory
 ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_", "panel_c_figure.png") , width = 7, height = 7, dpi = 300)
@@ -613,11 +614,63 @@ ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_
 
 
 
-```{r}
+```{r Edited Figure Pysam}
+# Attempt to incorporate Jesse's edits by using the data from pysam. 
+
+pysam.df = read_csv(pysam.data)
+
+# Filter the data to get the sites that Jesse wants
+figure.2.protein.pos = pysam.df %>% 
+  # Must have at least one missense mutation
+  filter(MISSENSE == "TRUE") %>% 
+  # Must be in the RBD
+  filter(RBD == "TRUE") %>% 
+  # Must be in the timeframe of interest (Day 143, 146, and 152)
+  filter(DAY >= 143) %>% 
+  # At least one mutation over 10%
+  filter(AF >= 0.1) %>% 
+  # Get a list of the relevant protein positions
+  pull(PROT_POS) %>% 
+  # only the unqiue sites are necessary
+  unique()
+
+# Get all of the changes at these positions
+snps.to.check = pysam.df[which(pysam.df$PROT_POS %in% figure.2.protein.pos),] %>% 
+  # Remove unecessary columns
+  select(!c("ACCESSION")) %>% 
+  # Set the AF to 0 on days the variant wasn't observed
+  pivot_wider(names_from = DAY, values_from = AF, values_fill = 0) %>%
+  # Pivot long for plotting
+  pivot_longer(!c("POS","DP","REF","ALT","SNP","CONS","AA_CHANGE","PROT_POS","WT_AA","MUT_AA","MISSENSE","RBD"),
+               names_to = "DAY", values_to = "AF") %>% 
+  # Filter for the interval of interest
+  mutate(DAY = as.integer(DAY)) %>% filter(DAY >= 143) %>% 
+  # Remove positions where there is no change over this interval
+  group_by(POS, ALT, REF) %>% 
+  
+  summarise(MIN_AF = min(AF), MAX_AF = max(AF)) %>% 
+  
+  mutate(DIFF_AF = MAX_AF - MIN_AF) %>% 
+  
+  mutate(SNP = paste0(REF, POS, ALT)) %>% 
+  
+  pull(SNP) %>% 
+  
+  unique()
+  
+  
+pysam.df = mutate(pysam.df, SNP = paste0(REF, POS, ALT))
+
+pysam.df[which(pysam.df$SNP %in% snps.to.check),] %>% 
+  filter(DAY == 143, PROT_POS == 440) %>% 
+  View()
+
 
 ```
 
 
+```{r}
+```
 
 
 
