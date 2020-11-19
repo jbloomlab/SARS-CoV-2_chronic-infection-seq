@@ -614,13 +614,15 @@ ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_
 
 
 
-```{r Edited Figure Pysam}
+```{r Edited Figure Pysam, fig.width=18, fig.height=4}
+
 # Attempt to incorporate Jesse's edits by using the data from pysam. 
 
+# Read in the pysam dataframe
 pysam.df = read_csv(pysam.data)
 
-# Filter the data to get the sites that Jesse wants
-figure.2.protein.pos = pysam.df %>% 
+# Filter the data to get the meaningful sites. 
+sites.to.plot = pysam.df %>% 
   # Must have at least one missense mutation
   filter(MISSENSE == "TRUE") %>% 
   # Must be in the RBD
@@ -634,36 +636,107 @@ figure.2.protein.pos = pysam.df %>%
   # only the unqiue sites are necessary
   unique()
 
-# Get all of the changes at these positions
-snps.to.check = pysam.df[which(pysam.df$PROT_POS %in% figure.2.protein.pos),] %>% 
-  # Remove unecessary columns
-  select(!c("ACCESSION")) %>% 
-  # Set the AF to 0 on days the variant wasn't observed
-  pivot_wider(names_from = DAY, values_from = AF, values_fill = 0) %>%
-  # Pivot long for plotting
-  pivot_longer(!c("POS","DP","REF","ALT","SNP","CONS","AA_CHANGE","PROT_POS","WT_AA","MUT_AA","MISSENSE","RBD"),
-               names_to = "DAY", values_to = "AF") %>% 
-  # Filter for the interval of interest
-  mutate(DAY = as.integer(DAY)) %>% filter(DAY >= 143) %>% 
-  # Remove positions where there is no change over this interval
-  group_by(POS, ALT, REF) %>% 
+# Further filtering 
+figure.df = pysam.df[which(pysam.df$PROT_POS %in% sites.to.plot),] %>% 
+  # Must be in the timeframe of interest (Day 143, 146, and 152)
+  filter(DAY >= 143) %>% 
+  # Get only the missense mutations
+  filter(MISSENSE == "TRUE") %>% 
+  # Drop the extra columns 
+  select(!c("ACCESSION", "RBD", "MISSENSE", "DP", "CONS", "SNP")) %>% 
+  # Make a new column for pivot 
+  mutate(DAY = paste0("DAY_", DAY)) %>% 
+  # Pivot wider to have information for every single time point
+  pivot_wider(names_from = DAY, values_from = AF, values_fill = 0) %>%  
+  # Filter out the mutations that change minimally
+  mutate(MEAN_CHANGE = rowMeans(select(.,starts_with("DAY_")))) %>% 
+  # Filter if the change is minimal i.e., between around 98% frequency and greater than 2%
+  filter(MEAN_CHANGE <= 0.98 & MEAN_CHANGE >= 0.02) %>% 
+  # Pivot longer to tidy version. 
+  pivot_longer(starts_with("DAY_"), names_to = "DAY", values_to = "AF") %>% 
+  # Split the day back into a number 
+  mutate(DAY = as.integer(str_replace_all(DAY, "DAY_", ""))) %>% 
+  # Remove the `MEAN_CHANGE` columns 
+  select(!MEAN_CHANGE) 
   
-  summarise(MIN_AF = min(AF), MAX_AF = max(AF)) %>% 
-  
-  mutate(DIFF_AF = MAX_AF - MIN_AF) %>% 
-  
-  mutate(SNP = paste0(REF, POS, ALT)) %>% 
-  
-  pull(SNP) %>% 
-  
-  unique()
-  
-  
-pysam.df = mutate(pysam.df, SNP = paste0(REF, POS, ALT))
 
-pysam.df[which(pysam.df$SNP %in% snps.to.check),] %>% 
-  filter(DAY == 143, PROT_POS == 440) %>% 
-  View()
+wt.df = pysam.df[which(pysam.df$POS %in% figure.df$POS),] %>% 
+  # Must be in the timeframe of interest (Day 143, 146, and 152)
+  filter(DAY >= 143) %>% 
+  # Get only the missense mutations
+  filter(MISSENSE == "FALSE") %>% 
+  # Drop the extra columns 
+  select(!c("ACCESSION", "RBD", "MISSENSE", "DP", "CONS", "SNP")) %>% 
+  # Make a new column for pivot 
+  mutate(DAY = paste0("DAY_", DAY)) %>% 
+  # Pivot wider to have information for every single time point
+  pivot_wider(names_from = DAY, values_from = AF, values_fill = 0) %>%  
+  # Pivot longer to tidy version. 
+  pivot_longer(starts_with("DAY_"), names_to = "DAY", values_to = "AF") %>% 
+  # Split the day back into a number 
+  mutate(DAY = as.integer(str_replace_all(DAY, "DAY_", ""))) 
+
+
+rbind(figure.df, wt.df) %>% 
+  mutate(IS_WT = if_else(WT_AA == MUT_AA, 'WT', 'MUT')) %>%
+  mutate(IS_WT = fct_relevel(IS_WT, "WT", "MUT")) %>% 
+    ggplot(aes(x = DAY, y = AF, fill = IS_WT)) +
+    #annotate(geom = "rect", xmin = 143, xmax = 152, ymin=0, ymax=1, fill = "#BAB0AC") +
+    geom_area() +
+    facet_wrap(~PROT_POS, nrow = 1) +
+    ylab("Mutation Fequency") + 
+    xlab("Days Post Hospital Admission") + 
+    scale_x_continuous(breaks = c(143, 146, 152), limits = c(143, 152)) +
+  
+    ### ==== Segments/Point Annotations ==== ###
+    annotate(geom = "segment", x = 143, y = y.pos ,  xend = 152, yend = y.pos, size = 1) +
+    annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1.5, col = "#F28E2B", linetype = 2) +
+    annotate(geom = "point", x = 143, y = y.pos, size = point.size) +
+    annotate(geom = "segment", x = 143, y = y.pos-0.05 ,  xend = 143, yend = y.pos, size = 1) +
+    annotate(geom = "point", x = 146, y = y.pos, size = point.size) +
+    annotate(geom = "segment", x = 146, y = y.pos-0.05 ,  xend = 146, yend = y.pos, size = 1) +
+    annotate(geom = "point", x = 152, y = y.pos, size = point.size) +
+    annotate(geom = "segment", x = 152, y = y.pos-0.05 ,  xend = 152, yend = y.pos, size = 1) +
+    ### ==== Segments/Point Annotations ==== ###
+  
+    theme_classic() +
+    theme(text=element_text(size=19,  family="Helvetica")) + 
+    theme(axis.title.x = element_text(vjust= -0.5))+ 
+    theme(panel.spacing = unit(2, "lines"))
+
+  
+
+
+
+
+
+  # # == Plotting TEST == #
+  # 
+  # ggplot(aes(x = DAY, y = AF, fill = MUT_AA)) +
+  #     annotate(geom = "rect", xmin = 143, xmax = 152, ymin=0, ymax=1, fill = "#BAB0AC") +
+  #     geom_area() +
+  #     facet_wrap(~PROT_POS, nrow = 1) +
+  #     ylab("Mutation Fequency") + 
+  #     xlab("Days Post Hospital Admission") + 
+  #     scale_x_continuous(breaks = c(143, 146, 152), limits = c(143, 152)) +
+  #   
+  #     ### ==== Segments/Point Annotations ==== ###
+  #     annotate(geom = "segment", x = 143, y = y.pos ,  xend = 152, yend = y.pos, size = 1) +
+  #     annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1.5, col = "#F28E2B", linetype = 2) +
+  #     annotate(geom = "point", x = 143, y = y.pos, size = point.size) +
+  #     annotate(geom = "segment", x = 143, y = y.pos-0.05 ,  xend = 143, yend = y.pos, size = 1) +
+  #     annotate(geom = "point", x = 146, y = y.pos, size = point.size) +
+  #     annotate(geom = "segment", x = 146, y = y.pos-0.05 ,  xend = 146, yend = y.pos, size = 1) +
+  #     annotate(geom = "point", x = 152, y = y.pos, size = point.size) +
+  #     annotate(geom = "segment", x = 152, y = y.pos-0.05 ,  xend = 152, yend = y.pos, size = 1) +
+  #     ### ==== Segments/Point Annotations ==== ###
+  #   
+  #     theme_classic() +
+  #     theme(text=element_text(size=19,  family="Helvetica")) + 
+  #     theme(axis.title.x = element_text(vjust= -0.5))+ 
+  #     theme(panel.spacing = unit(2, "lines"))
+  # 
+  # 
 
 
 ```
