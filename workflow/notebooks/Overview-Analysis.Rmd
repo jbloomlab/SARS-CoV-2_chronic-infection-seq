@@ -617,8 +617,10 @@ ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_
 ```{r Edited Figure Pysam, fig.width=18, fig.height=4}
 
 # Attempt to incorporate Jesse's edits by using the data from pysam. 
+tab_colors = c( "#7f7f7f", "#1f77b4", "#ff7f0e")
 
-# Read in the pysam dataframe
+
+# Read in the pysam dataframe (currently made in the notebook `Pysam_Analysis.ipynb`.)
 pysam.df = read_csv(pysam.data)
 
 # Filter the data to get the meaningful sites. 
@@ -636,7 +638,7 @@ sites.to.plot = pysam.df %>%
   # only the unqiue sites are necessary
   unique()
 
-# Further filtering 
+# Further filtering to get dataframe for plotting.
 figure.df = pysam.df[which(pysam.df$PROT_POS %in% sites.to.plot),] %>% 
   # Must be in the timeframe of interest (Day 143, 146, and 152)
   filter(DAY >= 143) %>% 
@@ -659,7 +661,7 @@ figure.df = pysam.df[which(pysam.df$PROT_POS %in% sites.to.plot),] %>%
   # Remove the `MEAN_CHANGE` columns 
   select(!MEAN_CHANGE) 
   
-
+# Get the WT counts and frequencies for the above mutations
 wt.df = pysam.df[which(pysam.df$POS %in% figure.df$POS),] %>% 
   # Must be in the timeframe of interest (Day 143, 146, and 152)
   filter(DAY >= 143) %>% 
@@ -676,68 +678,51 @@ wt.df = pysam.df[which(pysam.df$POS %in% figure.df$POS),] %>%
   # Split the day back into a number 
   mutate(DAY = as.integer(str_replace_all(DAY, "DAY_", ""))) 
 
-
+# Combine the WT and MUT dataframes and label
 rbind(figure.df, wt.df) %>% 
+  # Is the row a WT or MUT amino acid
   mutate(IS_WT = if_else(WT_AA == MUT_AA, 'WT', 'MUT')) %>%
-  mutate(IS_WT = fct_relevel(IS_WT, "WT", "MUT")) %>% 
+  # If there are more than one mutation at a site, manually alter the coloring
+  mutate(IS_WT = case_when(AA_CHANGE == "F486L" ~ "MUT-2",
+                           TRUE ~ IS_WT)) %>% 
+  # Relevel the factors for plotting
+  mutate(IS_WT = fct_relevel(IS_WT, "WT", "MUT", "MUT-2")) %>% 
+
+    ## == Plot the labeled stacked area plot == ##
+  
     ggplot(aes(x = DAY, y = AF, fill = IS_WT)) +
     #annotate(geom = "rect", xmin = 143, xmax = 152, ymin=0, ymax=1, fill = "#BAB0AC") +
     geom_area() +
     facet_wrap(~PROT_POS, nrow = 1) +
     ylab("Mutation Fequency") + 
-    xlab("Days Post Hospital Admission") + 
+    xlab("Days After Diagnosis") + 
     scale_x_continuous(breaks = c(143, 146, 152), limits = c(143, 152)) +
+    scale_y_continuous(breaks = c(0, 0.5, 1)) +
+
+    scale_fill_manual(values = tab_colors) +
   
-    ### ==== Segments/Point Annotations ==== ###
+    ### ==== Segments/Point Annotations X-Axis ==== ###
     annotate(geom = "segment", x = 143, y = y.pos ,  xend = 152, yend = y.pos, size = 1) +
-    annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1.5, col = "#F28E2B", linetype = 2) +
+    annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1.5, col = "black", linetype = 2) +
     annotate(geom = "point", x = 143, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 143, y = y.pos-0.05 ,  xend = 143, yend = y.pos, size = 1) +
+    #annotate(geom = "segment", x = 143, y = y.pos-0.05 ,  xend = 143, yend = y.pos, size = 1) +
     annotate(geom = "point", x = 146, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 146, y = y.pos-0.05 ,  xend = 146, yend = y.pos, size = 1) +
+    #annotate(geom = "segment", x = 146, y = y.pos-0.05 ,  xend = 146, yend = y.pos, size = 1) +
     annotate(geom = "point", x = 152, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 152, y = y.pos-0.05 ,  xend = 152, yend = y.pos, size = 1) +
-    ### ==== Segments/Point Annotations ==== ###
+    #annotate(geom = "segment", x = 152, y = y.pos-0.05 ,  xend = 152, yend = y.pos, size = 1) +
+    ### ==== Segments/Point Annotations X-Axis ==== ###
   
     theme_classic() +
-    theme(text=element_text(size=19,  family="Helvetica")) + 
-    theme(axis.title.x = element_text(vjust= -0.5))+ 
-    theme(panel.spacing = unit(2, "lines"))
-
-  
-
-
-
-
-
-  # # == Plotting TEST == #
-  # 
-  # ggplot(aes(x = DAY, y = AF, fill = MUT_AA)) +
-  #     annotate(geom = "rect", xmin = 143, xmax = 152, ymin=0, ymax=1, fill = "#BAB0AC") +
-  #     geom_area() +
-  #     facet_wrap(~PROT_POS, nrow = 1) +
-  #     ylab("Mutation Fequency") + 
-  #     xlab("Days Post Hospital Admission") + 
-  #     scale_x_continuous(breaks = c(143, 146, 152), limits = c(143, 152)) +
-  #   
-  #     ### ==== Segments/Point Annotations ==== ###
-  #     annotate(geom = "segment", x = 143, y = y.pos ,  xend = 152, yend = y.pos, size = 1) +
-  #     annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1.5, col = "#F28E2B", linetype = 2) +
-  #     annotate(geom = "point", x = 143, y = y.pos, size = point.size) +
-  #     annotate(geom = "segment", x = 143, y = y.pos-0.05 ,  xend = 143, yend = y.pos, size = 1) +
-  #     annotate(geom = "point", x = 146, y = y.pos, size = point.size) +
-  #     annotate(geom = "segment", x = 146, y = y.pos-0.05 ,  xend = 146, yend = y.pos, size = 1) +
-  #     annotate(geom = "point", x = 152, y = y.pos, size = point.size) +
-  #     annotate(geom = "segment", x = 152, y = y.pos-0.05 ,  xend = 152, yend = y.pos, size = 1) +
-  #     ### ==== Segments/Point Annotations ==== ###
-  #   
-  #     theme_classic() +
-  #     theme(text=element_text(size=19,  family="Helvetica")) + 
-  #     theme(axis.title.x = element_text(vjust= -0.5))+ 
-  #     theme(panel.spacing = unit(2, "lines"))
-  # 
-  # 
-
+    theme(
+      # Set the appropriate font size
+      text=element_text(size=19,  family="Helvetica"),
+      # Change the spacing of the facets
+      panel.spacing = unit(2, "lines"),
+      # Change x axis title position
+      axis.title.x = element_text(vjust= -0.5),
+      # Remove the legend
+      legend.position = "none"
+    )
 
 ```
 
