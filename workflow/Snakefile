@@ -24,12 +24,12 @@ include: "rules/common.smk"
 
 rule all:
     input: 
-        join(config['variant_dir'], "variants.csv"),
+        join(config['figure_dir'], "rbd_escape_mutations.png"),
+        join(config['figure_dir'], "all_spike_mutations.png"),
+        join(config['figure_dir'], "coverage_over_spike.png"),
         join(config['qc_dir'], 'multiqc'),
-        join(config['coverage_dir'], "merged.bedgraph"),
-        join(config['coverage_dir'], "merged.depth"),
-        join(config['coverage_dir'], "merged.average.depth"),
-        join(config['coverage_dir'], "coverage.stats")
+
+        join(config['variant_dir'], "variants.csv")
         
 rule clean:
     shell:
@@ -51,3 +51,4 @@ include: "rules/calculate-coverage.smk"
 include: "rules/calculate-pileup.smk"
 include: "rules/qc-tools.smk"
 include: "rules/call-variants.smk"
+include: "rules/make-figures.smk"
