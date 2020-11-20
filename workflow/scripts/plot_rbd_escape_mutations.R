@@ -14,13 +14,11 @@
 ## ---------------------------
 
 require(tidyverse)
-require(grid)
 
 ## ---------------------------
 
 ## ==== Path to pileup data from pysam script ==== ##
-# snakemake@input[[1]] 
-pysam.data = "../../config/pysam_pileup.csv" # Make the snakemake input file
+pysam.data = snakemake@input[[1]] # Make the snakemake input file
 
 ## ==== Add matplotlib Tableau color scheme ==== ##
 tab_colors = c( "#7f7f7f", "#1f77b4", "#ff7f0e")
@@ -127,6 +125,5 @@ rbind(figure.df, wt.df) %>%
   )
 
 # Save the file to figures directory - will be the Snakemake output path
-#snakemake@output[[1]]
-ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_", "pysam_2C_figure.png") , width = 18, height = 4, dpi = 300)
+ggsave(snakemake@output[[1]], width = 18, height = 4, dpi = 300)
 

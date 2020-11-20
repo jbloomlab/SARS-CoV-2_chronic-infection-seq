@@ -14,14 +14,12 @@
 ## ---------------------------
 
 require(tidyverse)
-require(grid)
 
 ## ---------------------------
 
 ## ==== Path to depth data from samtools and sample data that runs analysis ==== ##
-# snakemake@input[[1]] 
-depth.data = "../../results/coverage/merged.depth"
-sample.data = "../../config/samples.csv"
+depth.data = snakemake@input[[1]]
+sample.data = snakemake@params[[1]]
 
 # == Define the regions of interest - Spike, RBD, and RBM == #
 spike.coords = c(21563, 25384)
@@ -51,4 +49,4 @@ samtools.depth.bins %>%
     theme(panel.grid.major.y = element_line(colour="grey", linetype="dashed")) 
 
 # Save the file to figures directory
-ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_", "coverage_over_spike.png") , width = 11, height = 9, dpi = 300)
+ggsave(snakemake@output[[1]], width = 11, height = 9, dpi = 300)

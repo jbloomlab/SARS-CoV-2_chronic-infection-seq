@@ -14,13 +14,11 @@
 ## ---------------------------
 
 require(tidyverse)
-require(grid)
 
 ## ---------------------------
 
 ## ==== Path to pileup data from pysam script ==== ##
-# snakemake@input[[1]] 
-pysam.data = "../../config/pysam_pileup.csv" # Make the snakemake input file
+pysam.data = snakemake@input[[1]]  # Make the snakemake input file
 
 ## ==== Add matplotlib Tableau color scheme ==== ##
 tab_colors = c("#1f77b4","#ff7f0e")
@@ -125,8 +123,7 @@ figure.df %>%
     )
   
 # Save the file to figures directory - will be the Snakemake output path
-#snakemake@output[[1]]
-ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_", "supplemental_figure.png") , width = 10, height = 15, dpi = 300)
+ggsave(snakemake@output[[1]], width = 10, height = 15, dpi = 300)
 
 # NOTES
 # I need to change the plotting so that extra mutations are shown even though they aren't escape mutations.
