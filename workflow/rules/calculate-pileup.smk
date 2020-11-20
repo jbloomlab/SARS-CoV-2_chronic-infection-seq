@@ -52,24 +52,3 @@ rule aggregate_pileup:
         df.to_csv(output[0], index = False)
 
 
-rule test_parsing:
-    input: join(config['pileup_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.mpileup.txt")
-    output: 
-        join(config['pileup_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.mpileup-test.csv")
-    params: 
-        prefix = join(config['pileup_dir'], "{aligner}", "{accession}", "tmp.{accession}.{aligner}.mpileup_")
-    threads: config['threads']['pileup']
-    conda: '../envs/python.yml'
-    shell: 
-        """
-        split -d -a 2 --number l/{threads} {input} {params.prefix}
-
-        ls {params.prefix}* | parallel python workflow/scripts/ParsePileup.py --input {{}} --output {{}}.csv -si
-
-        echo 'POS,DP,REF,ALT,AF,COUNT' > {output[0]}
-
-        tail -q -n +2 {params.prefix}*.csv | cat >> {output[0]}
-
-        rm -f {params.prefix}*
-        """
-

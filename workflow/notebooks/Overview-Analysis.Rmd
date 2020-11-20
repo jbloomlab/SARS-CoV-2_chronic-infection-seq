@@ -614,7 +614,7 @@ ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_
 
 
 
-```{r Edited Figure Pysam, fig.width=18, fig.height=4}
+```{r Edited Figure2C Pysam, fig.width=18, fig.height=4}
 
 # Attempt to incorporate Jesse's edits by using the data from pysam. 
 tab_colors = c( "#7f7f7f", "#1f77b4", "#ff7f0e")
@@ -733,12 +733,17 @@ rbind(figure.df, wt.df) %>%
     )
 
 # Save the file to figures directory
-ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_", "panel_c_figure.png") , width = 18, height = 4, dpi = 300)
+ggsave(paste0("../../config/figures/", format(Sys.time(), "%Y-%m-%d_H%IM%M"), "_", "pysam_2C_figure.png") , width = 18, height = 4, dpi = 300)
 
 
 ```
 
 
+```{r Edited FigureS4 Pysam, fig.width=18, fig.height=4}
+
+
+
+```
 
 
 
