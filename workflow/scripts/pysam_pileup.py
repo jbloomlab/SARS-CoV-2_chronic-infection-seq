@@ -347,7 +347,7 @@ outpath = str(snakemake.output)
 ref_genome = [base.upper() for base in list(SeqIO.parse(str(snakemake.input.genome), "fasta"))[0].seq]
 
 # Name of sample
-accession = os.path.basename(path)
+accession = os.path.basename(inputpath)
 
 # Get the day of the sample 
 regex = re.compile("Day(?P<Day>\d+)_")
@@ -355,7 +355,7 @@ m = regex.match(accession)
 day = int(m.group('Day'))
 
 # Build the count df
-count_df = build_af_df(path, 
+count_df = build_af_df(inputpath, 
             callback_function=check_read, 
             ref = "NC_045512.2", 
             ref_path = str(snakemake.input.genome), 
@@ -367,13 +367,7 @@ count_df.insert(0, 'ACCESSION', accession)
 count_df.insert(1, 'DAY', day)
 
 # Annotate the count df   
-spike_count_df = annotate_coding_change_in_spike(count_df, ref_genome)
-
-# Save the list of dfs 
-spike_count_df_list.append(spike_count_df)
-
-# Join the list of dataframe
-joined_spike_count_df = pd.concat(spike_count_df_list, ignore_index=True)
+joined_spike_count_df = annotate_coding_change_in_spike(count_df, ref_genome)
 
 # TRUE/FALSE if there is a missense mutation
 joined_spike_count_df['MISSENSE'] = np.where(joined_spike_count_df['WT_AA'] != joined_spike_count_df['MUT_AA'], True, False)
