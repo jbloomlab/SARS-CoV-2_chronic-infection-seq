@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # Pipeline
-.DS_Store
+**.DS_Store
 .snakemake/
 results/
 **/ref
@@ -137,6 +137,8 @@ results/
 **/data
 **/gtf
 **/tools
+**/figures
+config/pysam_pileup.csv
 /tmp
 *.out
 *.Rhistory
