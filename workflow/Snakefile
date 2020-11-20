@@ -1,5 +1,5 @@
 """ 
-This Snakemake file runs the template analysis for the viral-deepseq pipeline.
+This is the Snakefile that runs the analysis for SARS-CoV-2_chronic_infection_seq.
 
 Author: Will Hannon – https://www.linkedin.com/in/williamhannon/
 """
@@ -24,9 +24,7 @@ include: "rules/common.smk"
 
 rule all:
     input: 
-        expand(join(config['pileup_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.mpileup-test.csv"),accession=pd.read_csv(config['samples']['file'])['Run'], aligner=['BWA']),
         join(config['variant_dir'], "variants.csv"),
-        join(config['pileup_dir'], "raw-variants.csv"),
         join(config['qc_dir'], 'multiqc'),
         join(config['coverage_dir'], "merged.bedgraph"),
         join(config['coverage_dir'], "merged.depth"),
