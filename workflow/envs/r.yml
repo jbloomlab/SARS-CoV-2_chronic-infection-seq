@@ -5,3 +5,4 @@ dependencies:
   - r-tidyverse
   - bioconductor-rsamtools
   - r-seqinr
+  - r-svglite
