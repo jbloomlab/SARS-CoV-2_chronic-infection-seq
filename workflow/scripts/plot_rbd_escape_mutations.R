@@ -90,12 +90,14 @@ rbind(figure.df, wt.df) %>%
                            TRUE ~ IS_WT)) %>% 
   # Relevel the factors for plotting
   mutate(IS_WT = fct_relevel(IS_WT, "WT", "MUT", "MUT-2")) %>% 
+  # Change the name to "residue # for plotting"
+  mutate(RESIDUE = fct_reorder(paste("Residue", PROT_POS, sep = " "), PROT_POS, .desc = F)) %>% 
   
   ## == Plot the labeled stacked area plot == ##
   
   ggplot(aes(x = DAY, y = AF, fill = IS_WT)) +
   geom_area() +
-  facet_wrap(~PROT_POS, nrow = 1) +
+  facet_wrap(~RESIDUE, ncol = 2) +
   ylab("mutation frequency") + 
   xlab("days after diagnosis") + 
   scale_x_continuous(breaks = c(143, 146, 152), limits = c(143, 152), expand = c(0,0)) +
@@ -107,9 +109,9 @@ rbind(figure.df, wt.df) %>%
   theme_classic() +
   theme(
     # Set the appropriate font size
-    text=element_text(size=19,  family="Helvetica"),
+    text=element_text(size=24,  family="Helvetica"),
     # Change the spacing of the facets
-    panel.spacing = unit(2, "lines"),
+    panel.spacing = unit(3, "lines"),
     # Change x axis title position
     axis.title.x = element_text(vjust= -0.5),
     # Change y axis title position
@@ -125,5 +127,5 @@ rbind(figure.df, wt.df) %>%
   )
 
 # Save the file to figures directory - will be the Snakemake output path
-ggsave(snakemake@output[[1]], width = 18, height = 4, dpi = 300)
+ggsave(snakemake@output[[1]], width = 9, height = 11, dpi = 300)
 

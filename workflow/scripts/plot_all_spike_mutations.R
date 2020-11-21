@@ -32,6 +32,8 @@ sites.to.plot = pysam.df %>%
   filter(MISSENSE == "TRUE") %>% 
   # At least one mutation over 10%
   filter(AF >= 0.1) %>% 
+  # Must have at least 100X coverage (not an issue for RBD)
+  filter(DP >= 100) %>% 
   # Get a list of the relevant protein positions
   pull(PROT_POS) %>% 
   # only the unqiue sites are necessary
@@ -64,14 +66,21 @@ figure.df = pysam.df[which(pysam.df$PROT_POS %in% sites.to.plot),] %>%
 y.pos = 0
 point.size = 1
 adj = 0.05
+tick.color = "#bcbd22"
 
 figure.df %>% 
+  # Remove D614G which is present in all timepoints.
+  filter(AA_CHANGE != "D614G") %>%
+  # Add "residue" to the name for plotting
+  mutate(RESIDUE = fct_reorder(paste("Residue", PROT_POS, sep = " "), PROT_POS, .desc = F)) %>% 
+  ## ========= Plot the figure ========= ##
+  
   ggplot(aes(x = DAY, y = AF, fill = COLOR_SCHEME, group = MUT_AA)) +
     # Annotation to represent the WT allele frequency
     annotate(geom = "rect", xmin = 18, xmax = 152, ymin=0, ymax=1, fill = "#7f7f7f") +
-    geom_area(col = "black") +
+    geom_area() +
     #geom_point(col ="black") +
-    facet_wrap(~PROT_POS, ncol =3) +
+    facet_wrap(~RESIDUE, ncol = 5) +
     ylab("mutation frequency") + 
     xlab("days after diagnosis") + 
     scale_fill_manual(values = tab_colors) +
@@ -81,24 +90,15 @@ figure.df %>%
     annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1, col = "black", linetype = 4) +
     annotate(geom = "segment", x = 18, y = 0 ,  xend = 152, yend = 0, size = 1, col = "black", linetype = 1) +
   
-    annotate(geom = "point", x = 18, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 18, y = y.pos ,  xend = 18, yend = y.pos+adj, size = 1) +
-    annotate(geom = "point", x = 25, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 25, y = y.pos ,  xend = 25, yend = y.pos+adj, size = 1) +
-    annotate(geom = "point", x = 75, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 75, y = y.pos ,  xend = 75, yend = y.pos+adj, size = 1) +
-    annotate(geom = "point", x = 81, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 81, y = y.pos ,  xend = 81, yend = y.pos+adj, size = 1) +
-    annotate(geom = "point", x = 128, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 128, y = y.pos ,  xend = 128, yend = y.pos+adj, size = 1) +
-    annotate(geom = "point", x = 130, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 130, y = y.pos ,  xend = 130, yend = y.pos+adj, size = 1) +
-    annotate(geom = "point", x = 143, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 143, y = y.pos ,  xend = 143, yend = y.pos+adj, size = 1) +
-    annotate(geom = "point", x = 146, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 146, y = y.pos ,  xend = 146, yend = y.pos+adj, size = 1) +
-    annotate(geom = "point", x = 152, y = y.pos, size = point.size) +
-    annotate(geom = "segment", x = 152, y = y.pos ,  xend = 152, yend = y.pos+adj, size = 1) +
+    annotate(geom = "segment", x = 18, y = y.pos ,  xend = 18, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 25, y = y.pos ,  xend = 25, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 75, y = y.pos ,  xend = 75, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 81, y = y.pos ,  xend = 81, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 128, y = y.pos ,  xend = 128, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 130, y = y.pos ,  xend = 130, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 143, y = y.pos ,  xend = 143, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 146, y = y.pos ,  xend = 146, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 152, y = y.pos ,  xend = 152, yend = y.pos+adj, size = 1, col = tick.color) +
     ### ==== Segments/Point Annotations X-Axis ==== ###
     
     ### ==== Themes for plot aestetics ==== ###
@@ -107,7 +107,7 @@ figure.df %>%
     theme_classic() +
     theme(
       # Set the appropriate font size
-      text=element_text(size=19,  family="Helvetica"),
+      text=element_text(size=20,  family="Helvetica"),
       # Change x axis title position
       axis.title.x = element_text(vjust= -0.5),
       # Change y axis title position
@@ -123,7 +123,7 @@ figure.df %>%
     )
   
 # Save the file to figures directory - will be the Snakemake output path
-ggsave(snakemake@output[[1]], width = 10, height = 15, dpi = 300)
+ggsave(snakemake@output[[1]], width = 20, height = 7, dpi = 300)
 
 # NOTES
 # I need to change the plotting so that extra mutations are shown even though they aren't escape mutations.
