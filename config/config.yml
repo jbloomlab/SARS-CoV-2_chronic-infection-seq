@@ -53,7 +53,7 @@ bin_size: 10
 
 # Parameters for variant calling.
 min_coverage: 100
-min_reads_supporting: 200
+min_reads_supporting: 10
 min_allele_frequency: 0.005
 strand_bias_filter: 1
 
