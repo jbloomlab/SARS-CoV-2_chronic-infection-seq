@@ -24,12 +24,13 @@ include: "rules/common.smk"
 
 rule all:
     input: 
-        join(config['figure_dir'], "rbd_escape_mutations.png"),
-        join(config['figure_dir'], "all_spike_mutations.png"),
-        join(config['figure_dir'], "coverage_over_spike.png"),
+        join(config['figure_dir'], "rbd_escape_mutations.svg"),
+        join(config['figure_dir'], "all_spike_mutations.svg"),
+        join(config['figure_dir'], "coverage_over_spike.svg"),
         join(config['qc_dir'], 'multiqc'),
+        join(config['variant_dir'], "variants.csv"),
+        join(config['pileup_dir'], "samtools_variants.csv")
 
-        join(config['variant_dir'], "variants.csv")
         
 rule clean:
     shell:
