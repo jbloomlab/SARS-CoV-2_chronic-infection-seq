@@ -1,5 +1,5 @@
 ## SARS-CoV-2 Chronic Infection Sequencing
-*2020-11-03*
+*2020-11-22*
 
 [![Snakemake](https://img.shields.io/badge/snakemake-≥5.17-brightgreen.svg)](https://snakemake.bitbucket.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -7,8 +7,16 @@
 ### Authors
 
 * [Will Hannon](https://www.linkedin.com/in/williamhannon/)
+* [Manish Choudhary](https://jonathanlilab.bwh.harvard.edu/)
+* [Jonathan Li](https://jonathanlilab.bwh.harvard.edu/)
 * [Jesse Bloom](https://www.fredhutch.org/en/faculty-lab-directory/bloom-jesse.html)
 
+### Overview
+
+This repo contains the code for generating the analysis of intra-host viral variation from the deep-sequencing data of SARS-CoV-2 from an immunocompromised patient. The associated publication for these samples is located [here](https://www.nejm.org/doi/full/10.1056/NEJMc2031364).
+
+Intra-patient single-nucleotide polymorphisms (SNPs) were identified with an automated variant-calling pipeline created with `Snakemake` (Köster & Rahmann, 2012). Briefly, paired-end reads were filtered, and sequencing adaptors were removed with `fastp` (Chen et al., 2018). Reads from SARS-CoV-2 were enriched by kmer matching to the Wuhan-Hu-1 reference genome (NC_045512.2) using [`BBDuk`](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/). Following filtering, reads were aligned to the Wuhan-Hu-1 reference with `BWA-MEM` (Li, 2013). Variants were identified by counting the coverage of each base at every position in the reference genome using a custom Python script. These variants were filtered based on a minimum allele frequency of >0.01, a PHRED quality threshold of >25, and coverage of more than 100 reads.
+ 
 ## Getting Started 
 
 First, clone the repository to your desired location. 
@@ -25,16 +33,21 @@ conda env create --file environment.yml; conda activate viral-deepseq
 
 ## Running Analysis
 
-To configure the analysis, you will need a table with the [NCBI SRA](https://www.ncbi.nlm.nih.gov/sra) accessions, the Library Layout (paired-end or single-end reads), the name of the virus corresponding to the location of its genome in the [`config file`](/config/config.yml), and the identity of the host organism if there are contaminating reads. See below for the correct format. 
+To configure the analysis, you will need a table formatted like the one below. This table should contain the [NCBI SRA](https://www.ncbi.nlm.nih.gov/sra) accessions, the Library Layout (paired-end or single-end files), if the files are single-ended format but interleaved, the name of the virus corresponding to the location of its genome in the [`config file`](/config/config.yml), and the identity of the host organism if there are contaminating reads. The used to run this analysis with paths to local `fastq` files is included at ['config/samples.csv`](config/samples.csv). Modifying that file with the changes below will run the analysis from the runs published on the SRA. 
 
-| Run         | LibraryLayout | Virus | Host  |
-|-------------|---------------|-------|-------|
-| SRR11549941 | SINGLE        | SARS2 | human |
-| SRR11549942 | SINGLE        | SARS2 | human |
-| SRR11140746 | PAIRED        | SARS2 | none  |
-| SRR11140748 | PAIRED        | SARS2 | none  |
+| Run       | LibraryLayout | Virus | Host  | Source | Day | Interleaved |
+|-----------|---------------|-------|-------|--------|-----|-------------|
+| SRR###### | SINGLE        | SARS2 | human | public | 18  | PAIRED      |
+| SRR###### | SINGLE        | SARS2 | human | public | 25  | PAIRED      |
+| SRR###### | SINGLE        | SARS2 | human | public | 75  | PAIRED      |
+| SRR###### | SINGLE        | SARS2 | human | public | 81  | PAIRED      |
+| SRR###### | SINGLE        | SARS2 | human | public | 128 | PAIRED      |
+| SRR###### | SINGLE        | SARS2 | human | public | 130 | PAIRED      |
+| SRR###### | SINGLE        | SARS2 | human | public | 143 | PAIRED      |
+| SRR###### | SINGLE        | SARS2 | human | public | 146 | PAIRED      |
+| SRR###### | SINGLE        | SARS2 | human | public | 152 | PAIRED      |
 
-To run the analysis locally, you can use the following command. I would not recommend this, because the computational time will be extensive if you don't have many cores. 
+To run the analysis locally, you can use the following command. I would not recommend this, because the computational time will be extensive. 
 
 ```
 snakemake --use-conda --conda-prefix ./env --cores 4
