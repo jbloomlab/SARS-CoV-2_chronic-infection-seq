@@ -65,7 +65,8 @@ figure.df = pysam.df[which(pysam.df$PROT_POS %in% sites.to.plot),] %>%
 ## ==== Plot Figure ==== ##
 y.pos = 0
 point.size = 1
-adj = 0.05
+adj = 0.08
+tick.size = 1.75
 tick.color = "#bcbd22"
 
 figure.df %>% 
@@ -90,15 +91,15 @@ figure.df %>%
     annotate(geom = "segment", x = 145, y = 0 ,  xend = 145, yend = 1, size = 1, col = "black", linetype = 4) +
     annotate(geom = "segment", x = 18, y = 0 ,  xend = 152, yend = 0, size = 1, col = "black", linetype = 1) +
   
-    annotate(geom = "segment", x = 18, y = y.pos ,  xend = 18, yend = y.pos+adj, size = 1, col = tick.color) +
-    annotate(geom = "segment", x = 25, y = y.pos ,  xend = 25, yend = y.pos+adj, size = 1, col = tick.color) +
-    annotate(geom = "segment", x = 75, y = y.pos ,  xend = 75, yend = y.pos+adj, size = 1, col = tick.color) +
-    annotate(geom = "segment", x = 81, y = y.pos ,  xend = 81, yend = y.pos+adj, size = 1, col = tick.color) +
-    annotate(geom = "segment", x = 128, y = y.pos ,  xend = 128, yend = y.pos+adj, size = 1, col = tick.color) +
-    annotate(geom = "segment", x = 130, y = y.pos ,  xend = 130, yend = y.pos+adj, size = 1, col = tick.color) +
-    annotate(geom = "segment", x = 143, y = y.pos ,  xend = 143, yend = y.pos+adj, size = 1, col = tick.color) +
-    annotate(geom = "segment", x = 146, y = y.pos ,  xend = 146, yend = y.pos+adj, size = 1, col = tick.color) +
-    annotate(geom = "segment", x = 152, y = y.pos ,  xend = 152, yend = y.pos+adj, size = 1, col = tick.color) +
+    annotate(geom = "segment", x = 18, y = y.pos ,  xend = 18, yend = y.pos+adj, size = tick.size, col = tick.color) +
+    annotate(geom = "segment", x = 25, y = y.pos ,  xend = 25, yend = y.pos+adj, size = tick.size, col = tick.color) +
+    annotate(geom = "segment", x = 75, y = y.pos ,  xend = 75, yend = y.pos+adj, size = tick.size, col = tick.color) +
+    annotate(geom = "segment", x = 81, y = y.pos ,  xend = 81, yend = y.pos+adj, size = tick.size, col = tick.color) +
+    annotate(geom = "segment", x = 128, y = y.pos ,  xend = 128, yend = y.pos+adj, size = tick.size, col = tick.color) +
+    annotate(geom = "segment", x = 130, y = y.pos ,  xend = 130, yend = y.pos+adj, size = tick.size, col = tick.color) +
+    annotate(geom = "segment", x = 143, y = y.pos ,  xend = 143, yend = y.pos+adj, size = tick.size, col = tick.color) +
+    annotate(geom = "segment", x = 146, y = y.pos ,  xend = 146, yend = y.pos+adj, size = tick.size, col = tick.color) +
+    annotate(geom = "segment", x = 152, y = y.pos ,  xend = 152, yend = y.pos+adj, size = tick.size, col = tick.color) +
     ### ==== Segments/Point Annotations X-Axis ==== ###
     
     ### ==== Themes for plot aestetics ==== ###
