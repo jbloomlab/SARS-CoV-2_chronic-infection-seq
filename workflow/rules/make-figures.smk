@@ -32,3 +32,11 @@ rule plot_coverage_in_spike:
     conda: "../envs/r.yml"
     script: "../scripts/plot_coverage_in_spike.R"
 
+rule plot_phased_rbd_mutations:
+    """ Plot the phased mutations in the RBD for timepoints 143,146,152.
+    """
+    input: join(config['pileup_dir'], "pysam_variants_phasing.csv")
+    output: join(config['figure_dir'], "phased_rbd_mutations.svg") 
+    params: config['samples']['file']
+    conda: "../envs/r.yml"
+    script: "../scripts/plot_phased_rbd_mutations.R"
