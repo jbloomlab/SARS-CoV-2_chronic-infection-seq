@@ -82,3 +82,30 @@ rule aggregate_pysam_pileup:
                 pass
         df = pd.concat(map(pd.read_csv, paths))
         df.to_csv(output[0], index = False)
+
+rule phase_pysam_variants:
+    """ Phase the varaints made with python/pysam.
+    """
+    input: bam=join(config['align_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.virus.sorted.marked.bam"),
+           bai=join(config['align_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.virus.sorted.marked.bam.bai"),        
+           genome=get_genome,
+           csv=join(config['pileup_dir'], "pysam_variants.csv")
+    output: join(config['pileup_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.pysam.pileup.phased.csv")
+    conda: "../envs/pysam.yml"
+    script: "../scripts/phase_variants.py"
+
+rule aggregate_phased_pysam_variants:
+    """ Aggregate the phasing data called with python and pysam.. 
+    """
+    input: expand(join(config['pileup_dir'], "{aligner}", "{accession}", "{accession}.{aligner}.pysam.pileup.phased.csv"), accession=pd.read_csv(config['samples']['file'])['Run'], aligner=['BWA'])
+    output: join(config['pileup_dir'], "pysam_variants_phasing.csv")
+    run:
+        paths = []
+        for f in input:
+            try:
+                pd.read_csv(f)
+                paths.append(f)
+            except:
+                pass
+        df = pd.concat(map(pd.read_csv, paths))
+        df.to_csv(output[0], index = False)
