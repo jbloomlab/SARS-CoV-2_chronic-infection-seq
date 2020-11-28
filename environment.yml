@@ -4,8 +4,10 @@ channels:
   - defaults
   - conda-forge
   - bioconda
+  - anaconda 
 
 dependencies:
   - snakemake-minimal=5.17
   - python=3.8
   - pandas=1.0
+  - yaml=0.1.7
