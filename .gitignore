@@ -138,7 +138,7 @@ results/
 **/gtf
 **/tools
 **/figures
-config/pysam_pileup.csv
+config/sra/ftp_password.txt
 /tmp
 *.out
 *.Rhistory
