@@ -22,7 +22,7 @@ if source == "SRA":
 
     # Attempt the download
         try:
-            shell("fasterq-dump {snakemake.wildcards.accession} --outdir {snakemake.params.outdir} --temp {snakemake.params.outdir} --threads {snakemake.threads} -f")  
+            shell("fasterq-dump {snakemake.wildcards.accession} --outdir {snakemake.params} --temp {snakemake.params} --threads {snakemake.threads} -f; gzip -c {snakemake.params}/*_1.fastq > {snakemake.output[0]}; gzip -c {snakemake.params}/*_2.fastq > {snakemake.output[1]}")  
             
             break 
 
