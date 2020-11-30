@@ -16,6 +16,8 @@
 This repo contains the code for generating the analysis of intra-host viral variation from the deep-sequencing data of SARS-CoV-2 from an immunocompromised patient. The associated publication for these samples is located [here](https://www.nejm.org/doi/full/10.1056/NEJMc2031364).
 
 Intra-patient single-nucleotide polymorphisms (SNPs) were identified with an automated variant-calling pipeline created with `Snakemake` (Köster & Rahmann, 2012). Briefly, paired-end reads were filtered, and sequencing adaptors were removed with `fastp` (Chen et al., 2018). Reads from SARS-CoV-2 were enriched by kmer matching to the Wuhan-Hu-1 reference genome (NC_045512.2) using [`BBDuk`](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/). Following filtering, reads were aligned to the Wuhan-Hu-1 reference with `BWA-MEM` (Li, 2013). Variants were identified by counting the coverage of each base at every position in the reference genome using a custom Python script. These variants were filtered based on a minimum allele frequency of >0.01, a PHRED quality threshold of >25, and coverage of more than 100 reads.
+
+ * Samples on the SRA have already been filtered using `fastp` to remove any human reads before uploading.
  
 ## Getting Started 
 
@@ -35,17 +37,17 @@ conda env create --file environment.yml; conda activate viral-deepseq
 
 To configure the analysis, you will need a table formatted like the one below. This table should contain the [NCBI SRA](https://www.ncbi.nlm.nih.gov/sra) accessions, the Library Layout (paired-end or single-end files), if the files are single-ended format but interleaved, the name of the virus corresponding to the location of its genome in the [`config file`](/config/config.yml), and the identity of the host organism if there are contaminating reads. The used to run this analysis with paths to local `fastq` files is included at ['config/samples.csv`](config/samples.csv). Modifying that file with the changes below will run the analysis from the runs published on the SRA. 
 
-| Run       | LibraryLayout | Virus | Host  | Source | Day | Interleaved |
-|-----------|---------------|-------|-------|--------|-----|-------------|
-| SRR###### | SINGLE        | SARS2 | human | public | 18  | PAIRED      |
-| SRR###### | SINGLE        | SARS2 | human | public | 25  | PAIRED      |
-| SRR###### | SINGLE        | SARS2 | human | public | 75  | PAIRED      |
-| SRR###### | SINGLE        | SARS2 | human | public | 81  | PAIRED      |
-| SRR###### | SINGLE        | SARS2 | human | public | 128 | PAIRED      |
-| SRR###### | SINGLE        | SARS2 | human | public | 130 | PAIRED      |
-| SRR###### | SINGLE        | SARS2 | human | public | 143 | PAIRED      |
-| SRR###### | SINGLE        | SARS2 | human | public | 146 | PAIRED      |
-| SRR###### | SINGLE        | SARS2 | human | public | 152 | PAIRED      |
+| Run         | LibraryLayout | Virus | Host  | Source | Day |
+|-------------|---------------|-------|-------|--------|-----|
+| SRR13160722 | PAIRED        | SARS2 | human | public | 152 |
+| SRR13160723 | PAIRED        | SARS2 | human | public | 146 |
+| SRR13160724 | PAIRED        | SARS2 | human | public | 143 |
+| SRR13160725 | PAIRED        | SARS2 | human | public | 130 |
+| SRR13160726 | PAIRED        | SARS2 | human | public | 128 |
+| SRR13160727 | PAIRED        | SARS2 | human | public | 81  |
+| SRR13160728 | PAIRED        | SARS2 | human | public | 75  |
+| SRR13160729 | PAIRED        | SARS2 | human | public | 25  |
+| SRR13160730 | PAIRED        | SARS2 | human | public | 18  |
 
 To run the analysis locally, you can use the following command. I would not recommend this, because the computational time will be extensive. 
 
