@@ -13,7 +13,7 @@
 
 ### Overview
 
-This repo contains the code for generating the analysis of intra-host viral variation from the deep-sequencing data of SARS-CoV-2 from an immunocompromised patient. The associated publication for these samples is located [here](https://www.nejm.org/doi/full/10.1056/NEJMc2031364).
+This repo contains the code for generating the analysis of intra-host viral variation from the deep-sequencing data of SARS-CoV-2 from an immunocompromised patient. The associated publication for these samples is located [here](https://www.nejm.org/doi/full/10.1056/NEJMc2031364), and the preprint is located [here](https://www.biorxiv.org/content/10.1101/2020.11.30.405472v1).
 
 Intra-patient single-nucleotide polymorphisms (SNPs) were identified with an automated variant-calling pipeline created with `Snakemake` (Köster & Rahmann, 2012). Briefly, paired-end reads were filtered, and sequencing adaptors were removed with `fastp` (Chen et al., 2018). Reads from SARS-CoV-2 were enriched by kmer matching to the Wuhan-Hu-1 reference genome (NC_045512.2) using [`BBDuk`](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/). Following filtering, reads were aligned to the Wuhan-Hu-1 reference with `BWA-MEM` (Li, 2013). Variants were identified by counting the coverage of each base at every position in the reference genome using a custom Python script. These variants were filtered based on a minimum allele frequency of >0.01, a PHRED quality threshold of >25, and coverage of more than 100 reads.
 
