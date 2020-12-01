@@ -37,6 +37,8 @@ conda env create --file environment.yml; conda activate viral-deepseq
 
 To configure the analysis, you will need a table formatted like the one below. This table should contain the [NCBI SRA](https://www.ncbi.nlm.nih.gov/sra) accessions, the Library Layout (paired-end or single-end files), if the files are single-ended format but interleaved, the name of the virus corresponding to the location of its genome in the [`config file`](/config/config.yml), and the identity of the host organism if there are contaminating reads. The used to run this analysis with paths to local `fastq` files is included at ['config/samples.csv`](config/samples.csv). Modifying that file with the changes below will run the analysis from the runs published on the SRA. 
 
+To run this analysis with the data on the SRA, simply change the sample path in the [`config file`](/config/config.yml) from `config/samples.csv` to `config/samples_sra.csv`. 
+
 | Run         | LibraryLayout | Virus | Host  | Source | Day |
 |-------------|---------------|-------|-------|--------|-----|
 | SRR13160722 | PAIRED        | SARS2 | human | public | 152 |
