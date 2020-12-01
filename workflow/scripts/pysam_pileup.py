@@ -58,6 +58,43 @@ def translate(codon):
     
     return table[codon]
 
+def get_day(path):
+    """
+    If the samples are downloaded from the SRA, use the
+    SRA accession to get the day the sample was collected on. 
+
+    Parameters
+    ----------
+    path : str
+        path to the sample
+
+    Returns
+    -------
+    int
+        the day the sample was collected
+
+    """
+    
+    day_mapping = { 
+    'SRR13160722':152, 
+    'SRR13160723':146, 
+    'SRR13160724':143, 
+    'SRR13160725':130, 
+    'SRR13160726':128, 
+    'SRR13160727':81, 
+    'SRR13160728':75, 
+    'SRR13160729':25, 
+    'SRR13160730':18
+    } 
+    
+    basename = os.path.basename(path)
+
+    regex = re.compile("(?P<run>SRR\d+)\.BWA")
+    
+    m = regex.match(basename)
+
+    return day_mapping[str(m.group('run'))]
+
 
 def mutate(codon, alt, index):
     """
@@ -349,10 +386,16 @@ ref_genome = [base.upper() for base in list(SeqIO.parse(str(snakemake.input.geno
 # Name of sample
 accession = os.path.basename(inputpath)
 
-# Get the day of the sample 
-regex = re.compile("Day(?P<Day>\d+)_")
-m = regex.match(accession)
-day = int(m.group('Day'))
+if accession.startswith("Day"):
+
+    # Get the day of the sample 
+    regex = re.compile("Day(?P<Day>\d+)_")
+    m = regex.match(accession)
+    day = int(m.group('Day'))
+
+else:
+
+   day = get_day(inputpath)
 
 # Build the count df
 count_df = build_af_df(inputpath, 

@@ -40,7 +40,44 @@ def check_read(read):
         return False
     else:
         return True
+
+
+def get_day(path):
+    """
+    If the samples are downloaded from the SRA, use the
+    SRA accession to get the day the sample was collected on. 
+
+    Parameters
+    ----------
+    path : str
+        path to the sample
+
+    Returns
+    -------
+    int
+        the day the sample was collected
+
+    """
     
+    day_mapping = { 
+    'SRR13160722':152, 
+    'SRR13160723':146, 
+    'SRR13160724':143, 
+    'SRR13160725':130, 
+    'SRR13160726':128, 
+    'SRR13160727':81, 
+    'SRR13160728':75, 
+    'SRR13160729':25, 
+    'SRR13160730':18
+    } 
+    
+    basename = os.path.basename(path)
+
+    regex = re.compile("(?P<run>SRR\d+)\.BWA")
+    
+    m = regex.match(basename)
+
+    return day_mapping[str(m.group('run'))]
     
 
 def phase_variants(aa_change_list, joined_spike_count_df, filepath, contig = "NC_045512.2"):
@@ -186,9 +223,17 @@ outpath = str(snakemake.output)
 accession = os.path.basename(inputpath_bam)
 
 # Get the day of the sample 
-regex = re.compile("Day(?P<Day>\d+)_")
-m = regex.match(accession)
-day = int(m.group('Day'))
+if accession.startswith("Day"):
+
+    regex = re.compile("Day(?P<Day>\d+)_")
+    m = regex.match(accession)
+    day = int(m.group('Day'))
+
+else:
+
+   day = get_day(inputpath)
+
+
 
 # Read in the join_calling df 
 input_snp_df = pd.read_csv(inputpath_csv)  
